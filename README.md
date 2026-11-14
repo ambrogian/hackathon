@@ -2,6 +2,14 @@
 
 Offline troubleshooting assistant for a polycarbonate sheet extrusion line. An operator photographs a defect; a local vision model on a Qualcomm device names it and tells the operator where on the line to intervene.
 
+## Contributors
+
+| GitHub | Contribution |
+|---|---|
+| [ambrogian](https://github.com/ambrogian) | Line knowledge base, failure scenarios, showcase, demo videos |
+| [contrapuntal](https://github.com/contrapuntal) | IQ-9075 board runtime: d1 and LFM3-Omni on the NPU, inspection and voice field manual, dashboard |
+| [Vent3st](https://github.com/Vent3st) | IQ-9075 inspection demo mocks and d1 decision service ([#1](https://github.com/ambrogian/hackathon/pull/1)) |
+
 ## Demo on the IQ-9075
 
 ![Monitor dashboard on the IQ-9075: d1 flags BAD 0.04 against the GOOD control, Omni boxes the spill and explains it](docs/images/dashboard-monitor.png)
@@ -37,11 +45,3 @@ speakerphone push-to-talk, LFM3-Omni-2B on the Hexagon NPU (llama.cpp ggml-hexag
 knowledge base with the cited entry, spoken replies, a JSONL log and a judge display. See
 [`field-manual/README.md`](field-manual/README.md) and [`field-manual/OVERVIEW.md`](field-manual/OVERVIEW.md)
 (architecture and measured numbers).
-
-## Contributors
-
-| GitHub | Contribution |
-|---|---|
-| [ambrogian](https://github.com/ambrogian) | Line knowledge base, failure scenarios, showcase, demo videos |
-| [contrapuntal](https://github.com/contrapuntal) | IQ-9075 board runtime: d1 and LFM3-Omni on the NPU, inspection and voice field manual, dashboard |
-| [Vent3st](https://github.com/Vent3st) | IQ-9075 inspection demo mocks and d1 decision service ([#1](https://github.com/ambrogian/hackathon/pull/1)) |
