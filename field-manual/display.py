@@ -173,6 +173,10 @@ def control(path, body):
                 img = ROOT / 'live/latest.jpg'
             if not img.is_file():
                 return 400, {'error': 'no input image'}
+            try:
+                os.remove(ROOT / 'live/stage.json')
+            except OSError:
+                pass
             spawn('analyze', [sys.executable, str(ROOT / 'inspect_mode.py'), 'check', '--no-speak', '--image', str(img)])
             return 200, {'ok': True, 'running': running()}
         if path == '/api/reset':
@@ -390,7 +394,7 @@ const $=id=>document.getElementById(id);let S={},shown='',typed=0,tkey='',au=nul
 async function post(p,b){try{const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});const j=await r.json();$('err').textContent=r.ok?'':(j.error||r.status);poll()}catch(e){$('err').textContent=String(e)}}
 $('bm').onclick=()=>post('/api/monitor',{action:(S.running||[]).length?'stop':'start'});
 fetch('/api/images').then(r=>r.json()).then(l=>{for(const n of l){const o=document.createElement('option');o.value=n;o.textContent=n;$('pick').appendChild(o)}});
-$('pick').onchange=()=>{const v=$('pick').value;if(v){$('img').src='/demo/'+v.split('/').map(encodeURIComponent).join('/');$('img').hidden=false;$('cap').textContent='Selected: '+v}};
+$('pick').onchange=()=>{const v=$('pick').value;picked=!!v;if(v){$('img').src='/demo/'+v.split('/').map(encodeURIComponent).join('/');$('img').hidden=false;$('cap').textContent='Selected: '+v}};
 $('ba').onclick=()=>post('/api/analyze',{image:$('pick').value||null});$('br').onclick=()=>post('/api/reset');
 $('play').onclick=()=>{if(S.audio){new Audio('/audio/'+S.audio.split('/').map(encodeURIComponent).join('/')).play()}};
 const url=n=>'/frame/'+n.split('/').map(encodeURIComponent).join('/')+'?'+encodeURIComponent(S.time||'');
@@ -401,8 +405,11 @@ function render(){
  if(st==='input'){h='Input image';c=''}
  else if(st==='monitoring'){h='Monitoring line… GOOD '+p+' (d1, NPU'+(T.d1_s?', '+T.d1_s.toFixed(2)+' s':'')+')';c='good'}
  else if(st==='inference'){h='Anomaly: running inference…  '+(S.verdict||'')+' '+p;c='warn'}
+ else if(st==='error'){h='Error: '+(S.error||'');c='bad'}
  else{h=(S.verdict||'')+' '+p;c=S.verdict==='GOOD'?'good':'bad'}
  $('status').textContent=h;$('status').className=c;
+ if(st!=='input')picked=false;
+ if(picked&&st==='input'){$('status').textContent=run?'Analyzing… (d1 loading on the NPU)':'Selected image: press Analyze';$('status').className='';return}
  const isbad=(st==='inference'||st==='box'||st==='text'||st==='done')&&S.verdict&&S.verdict!=='GOOD';
  $('cap').textContent=isbad?((st!=='inference'&&S.annotated?'Anomaly (box): ':'Live input: ')+S.verdict):(S.verdict==='GOOD'?'Live input: GOOD (d1 '+(S.p!=null?Number(S.p).toFixed(2):'')+')':'Input: not analyzed yet');
  $('cap').className=isbad?'bad':(S.verdict==='GOOD'?'good':'');
@@ -417,6 +424,7 @@ function render(){
  $('play').disabled=!S.audio;$('anote').textContent=S.audio?'':'(coming later)';
 }
 setInterval(()=>{const t=(S.stage==='text'||S.stage==='done')?(S.text||''):'';if(typed<t.length){typed+=2;$('text').textContent=t.slice(0,typed)}},40);
+let picked=false;
 async function poll(){try{S=await (await fetch('/api/stage',{cache:'no-store'})).json();render()}catch(e){}}
 poll();setInterval(poll,500);
 </script></body></html>"""
