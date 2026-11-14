@@ -107,7 +107,7 @@ def running():
 
 def spawn(name, argv):
     PROCS[name] = subprocess.Popen(argv, cwd=ROOT, start_new_session=True, stdin=subprocess.DEVNULL,
-                                   stdout=open('/tmp/field-manual-%s.log' % name, 'w'), stderr=subprocess.STDOUT)
+                                   stdout=open(ROOT / 'live' / ('field-manual-%s.log' % name), 'w'), stderr=subprocess.STDOUT)
 
 
 def write_stage(d):
@@ -338,7 +338,7 @@ button{font:inherit;font-weight:700;padding:14px 30px;border-radius:12px;border:
 button:disabled{opacity:.4}
 main{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:22px}
 @media(max-width:900px){main{grid-template-columns:1fr}}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}figure{margin:0}figcaption{font-size:22px;font-weight:700;margin-bottom:6px}
+.pair{display:grid;grid-template-columns:1fr 3fr;gap:12px;align-items:start}figure{margin:0}figcaption{font-size:22px;font-weight:700;margin-bottom:6px}
 #ref,#img{width:100%;aspect-ratio:4/3;max-height:50vh;object-fit:contain;background:#000;border-radius:12px;border:6px solid #223}
 #status{font-size:44px;font-weight:800;line-height:1.15}
 .good{color:#3ddc84}.bad{color:#ff5a4f}.warn{color:#ffc247}
