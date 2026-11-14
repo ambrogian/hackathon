@@ -11,7 +11,10 @@ python3 field_manual.py --once           # one live camera + Calisto question
 python3 field_manual.py --once --text 'where do I plug in power?'
 python3 field_manual.py --once --image runs/example/frame.jpg --audio question.wav
 ```
-Default recording: 4 seconds; change with `--seconds 6`.
+Recommended for the demo: `python3 field_manual.py --loop` (hands-free; use the Calisto mute button as push-to-talk: unmute, speak, mute. Digital silence is treated as muted and never triggers a turn).
+Recording is endpointed by voice level (starts above the noise floor, stops after 0.8 s of silence or re-mute); `--seconds N` is the max utterance length (default 8). Without `--loop`, Enter starts a turn and 5 s without speech reports "I didn't hear a question".
+`--asr-late` runs ASR after the answer instead of before (about 0.3 s faster, less reliable in testing).
+Speech is streamed to the speaker as it is synthesized.
 Webcam: /dev/video0 through ~/ondev/scripts/board_capture.sh and tools/ffmpeg.
 Calisto: pw-record source 56; spoken answers: pw-play sink 55.
 `--no-speak` disables TTS/playback for quiet use.

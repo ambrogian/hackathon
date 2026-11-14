@@ -10,7 +10,9 @@ import mimetypes
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
+import threading
 import sys
 import time
 import urllib.request
@@ -100,6 +102,133 @@ def audio_gate(path):
             'threshold_dbfs': -45, 'minimum_duration_s': 0.3}
 
 
+def beep(path, hz):
+    if not path.exists():
+        with wave.open(str(path), 'wb') as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+            n = 1600
+            w.writeframes(array.array('h', [int(9000 * math.sin(2 * math.pi * hz * i / 16000)
+                * min(1, i / 160, (n - i) / 160)) for i in range(n)]).tobytes())
+    try:
+        command(['pw-play', '--target', '55', path], timeout=5)
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        pass
+
+
+def record_vad(clip, max_s=8.0, wait_s=5.0, tail_s=0.8, loop=False):
+    """Stream raw PCM from pw-record, endpoint on per-20 ms RMS. Returns info dict."""
+    frame_bytes = 640  # 20 ms of 16 kHz s16 mono
+    beep(Path('/tmp/fm_beep_hi.wav'), 880)
+    print('Listening…', flush=True)
+    proc = subprocess.Popen(['pw-record', '--target', '56', '--rate', '16000', '--channels', '1',
+        '--format', 's16', '-'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    buf, frames, pre, voiced = b'', [], [], []
+    floor_levels, thresh, speaking, silent, loud, zeros = [], None, False, 0, 0, 0
+    began, speech_t0, heard = time.monotonic(), None, False
+    header_checked = False
+    try:
+        while True:
+            data = os.read(proc.stdout.fileno(), 4096)
+            if not data:
+                break
+            buf += data
+            if not header_checked and len(buf) >= 4:
+                header_checked = True
+                if buf[:4] == b'RIFF':
+                    buf = buf[44:]
+            while header_checked and len(buf) >= frame_bytes:
+                f, buf = buf[:frame_bytes], buf[frame_bytes:]
+                s = array.array('h', f)
+                rms = math.sqrt(sum(x * x for x in s) / len(s))
+                now = time.monotonic() - began
+                muted = rms < 2.0  # digital silence: Calisto muted
+                if muted and not speaking:
+                    pre, loud = [], 0
+                    if thresh is None:
+                        floor_levels = []
+                    if not loop and now > wait_s:
+                        raise StopIteration
+                    continue
+                if muted and speaking:
+                    zeros += 1
+                    voiced.append(f)
+                    if zeros >= 10:  # re-muted: utterance over
+                        raise StopIteration
+                    continue
+                zeros = 0
+                if thresh is None:
+                    floor_levels.append(rms); pre.append(f)
+                    if len(floor_levels) >= 15:  # 0.3 s calibration
+                        floor = sorted(floor_levels)[len(floor_levels) // 2]
+                        thresh = max(floor * 3.0, floor + 250, 300)
+                    continue
+                if not speaking:
+                    pre.append(f); pre = pre[-25:]
+                    loud = loud + 1 if rms > thresh else 0
+                    if loud >= 3:  # 60 ms clearly above floor
+                        speaking, speech_t0, silent = True, now, 0
+                        voiced = list(pre)
+                    elif not loop and now > wait_s:
+                        raise StopIteration
+                else:
+                    voiced.append(f)
+                    silent = silent + 1 if rms < thresh else 0
+                    if silent * 0.02 >= tail_s or now - speech_t0 >= max_s:
+                        raise StopIteration
+    except StopIteration:
+        pass
+    finally:
+        proc.send_signal(signal.SIGINT)
+        try:
+            proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            proc.terminate(); proc.wait(timeout=2)
+    beep(Path('/tmp/fm_beep_lo.wav'), 440)
+    with wave.open(str(clip), 'wb') as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+        w.writeframes(b''.join(voiced if speaking else pre))
+    return {'speech': speaking, 'threshold_rms': thresh,
+            'floor_rms': None if thresh is None else round(thresh, 1),
+            'record_total_s': round(time.monotonic() - began, 3)}
+
+
+def speak(text, speech, timings, record):
+    """Stream TTS into pw-play; fall back to buffered WAV."""
+    began = time.monotonic()
+    try:
+        req = urllib.request.Request(BASE + '/v1/audio/speech',
+            data=json.dumps({'input': text, 'response_format': 'wav', 'stream_format': 'audio'}).encode(),
+            headers={'Content-Type': 'application/json'})
+        player = subprocess.Popen(['pw-play', '--target', '55', '-'], stdin=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
+        total, first = 0, None
+        try:
+            with OPENER.open(req, timeout=150) as r, open(speech, 'wb') as out:
+                while True:
+                    chunk = r.read(4096)
+                    if not chunk:
+                        break
+                    if first is None:
+                        first = time.monotonic() - began
+                    total += len(chunk)
+                    out.write(chunk)
+                    player.stdin.write(chunk)
+            player.stdin.close()
+        except Exception:
+            player.kill(); raise
+        if player.wait(timeout=60) != 0 or total < 1000:
+            raise RuntimeError('stream playback failed: ' + player.stderr.read().decode()[-300:])
+        timings['tts_first_audio_s'] = round(first, 3)
+        timings['tts_stream_total_s'] = round(time.monotonic() - began, 3)
+        record['speech_mode'] = 'stream'
+        return
+    except Exception as exc:
+        record['speech_stream_error'] = str(exc)[:300]
+    speech.write_bytes(request('/v1/audio/speech', {'input': text, 'response_format': 'wav'}, binary=True))
+    command(['pw-play', '--target', '55', speech], timeout=45)
+    record['speech_mode'] = 'buffered'
+
+
 def validate(raw, cards):
     try:
         answer = json.loads(raw)
@@ -167,19 +296,22 @@ def turn(args, cards):
                         'error', '-y', '-i', args.audio, '-ar', '16000', '-ac', '1',
                         '-c:a', 'pcm_s16le', clip])
                 else:
-                    command(['timeout', '--signal=INT', str(args.seconds), 'pw-record',
-                        '--target', '56', '--rate', '16000', '--channels', '1', '--format',
-                        's16', clip], timeout=args.seconds + 8, allowed=(0, 124, 130))
-            print('Recording question...' if not args.audio else 'Reading audio file...', flush=True)
+                    record['vad'] = record_vad(clip, max_s=args.seconds, loop=args.loop)
+            if args.audio:
+                print('Reading audio file...', flush=True)
             stage('record_s', capture_audio)
             record['clip'] = str(clip)
             record['gate'] = stage('gate_s', lambda: audio_gate(clip))
+            if 'vad' in record and not record['vad']['speech']:
+                record['gate']['result'] = 'rejected'
+                record['gate']['reason'] = 'no_speech_detected'
             if record['gate']['result'] == 'rejected':
                 record['step'] = NO_SPEECH
             else:
-                result = stage('asr_s', lambda: chat('Perform ASR in English.', '', audio=clip, asr=True))
-                record['transcript'] = result['choices'][0]['message']['content'].strip()
-                record['model'] = result.get('model') or record['model']
+                if (not args.asr_late):
+                    result = stage('asr_s', lambda: chat('Perform ASR in English.', '', audio=clip, asr=True))
+                    record['transcript'] = result['choices'][0]['message']['content'].strip()
+                    record['model'] = result.get('model') or record['model']
         if record['gate']['result'] != 'rejected':
             # Compact context leaves space for both media inputs in the server's context.
             system = ('You are the IQ-9075 EVK field manual. Use only these manual cards. '
@@ -191,25 +323,39 @@ def turn(args, cards):
                 'look_for is a search hint, not evidence. Do not invent locations. Cards:\n' +
                 json.dumps([{k: c[k] for k in ('id', 'title', 'step', 'look_for')} for c in cards.values()]))
             result = stage('omni_s', lambda: chat(system,
-                'Question: ' + record['transcript'], image=frame, audio=clip))
+                ('Question: ' + record['transcript']) if record['transcript'] else 'Question: answer the question spoken in the attached audio.', image=frame, audio=clip))
             record['model'] = result.get('model') or record['model']
             raw = result['choices'][0]['message']['content']
             record['model_response'] = raw
             record['card'], record['step'], record['seen'], record['validation'] = validate(raw, cards)
             if record['card'] is not None:
                 record['source'] = cards[record['card']]['source']
-        print('Transcript:', record['transcript'] or '(none)', flush=True)
+        if clip and record['gate']['result'] != 'rejected' and args.asr_late:
+            # Single-slot server: ASR runs after the answer text is out, for display/log only.
+            try:
+                def late_asr():
+                    r = chat('Perform ASR in English.', '', audio=clip, asr=True)
+                    record['transcript'] = r['choices'][0]['message']['content'].strip()
+                if args.no_speak:
+                    stage('asr_s', late_asr)
+            except (OSError, RuntimeError, ValueError):
+                pass
         print('Seen (model, unverified):', record['seen'] or '(not established)', flush=True)
         print('Step:', record['step'], flush=True)
         print('Card:', record['card'], flush=True)
         if not args.no_speak:
             speech = run / 'answer.wav'
-            def synthesize():
-                speech.write_bytes(request('/v1/audio/speech',
-                    {'input': record['step'], 'response_format': 'wav'}, binary=True))
-            stage('tts_s', synthesize)
             record['speech'] = str(speech)
-            stage('playback_s', lambda: command(['pw-play', '--target', '55', speech], timeout=45))
+            stage('speak_s', lambda: speak(record['step'], speech, timings, record))
+            if clip and record['gate']['result'] != 'rejected' and args.asr_late:
+                try:
+                    stage('asr_s', late_asr)
+                except (OSError, RuntimeError, ValueError):
+                    pass
+        if clip and args.asr_late:
+            print('Transcript:', record['transcript'] or '(none)', flush=True)
+        elif record['transcript']:
+            print('Transcript:', record['transcript'], flush=True)
     except (OSError, ValueError, KeyError, IndexError, TypeError, RuntimeError, subprocess.SubprocessError) as exc:
         record['error'] = str(exc)
         print('ERROR:', exc, file=sys.stderr, flush=True)
@@ -229,7 +375,9 @@ def main():
     parser.add_argument('--text', help='Typed question; skips microphone and ASR')
     parser.add_argument('--image', help='Use an image file instead of the live camera')
     parser.add_argument('--audio', help='Use an audio file instead of the Calisto microphone')
-    parser.add_argument('--seconds', type=float, default=4)
+    parser.add_argument('--seconds', type=float, default=8, help='Max utterance length (VAD endpointing)')
+    parser.add_argument('--loop', action='store_true', help='Hands-free: listen continuously (mute-button push-to-talk), no Enter')
+    parser.add_argument('--asr-late', action='store_true', help='Run ASR after the answer (saves ~0.3 s, but answers were less reliable in testing)')
     parser.add_argument('--no-speak', action='store_true', help='Display and log without TTS/playback')
     args = parser.parse_args()
     if not math.isfinite(args.seconds) or not 0 < args.seconds <= 30:
@@ -242,6 +390,10 @@ def main():
         parser.error('Manual contains duplicate IDs')
     if args.once:
         return turn(args, cards)
+    if args.loop:
+        print('Dead-Zone Field Manual hands-free: unmute the Calisto, speak, mute. Ctrl-C to exit.', flush=True)
+        while True:
+            turn(args, cards)
     print('Dead-Zone Field Manual — Enter to ask; Ctrl-D or Ctrl-C to exit.', flush=True)
     while True:
         try:
