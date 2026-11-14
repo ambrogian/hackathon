@@ -17,3 +17,11 @@ Edit the JSON, then run `python3 kb/build.py`.
 Content is general PC sheet extrusion process knowledge, not a specific OEM manual. Typical values must be replaced with the real line's setpoints and reviewed by a process engineer before use on a real line.
 
 Reference images (third-party, credited, not committed) live in `images/candidates/`.
+
+## On the IQ-9075: camera, voice and NPU runtime (`field-manual/`)
+
+The board-side app that runs the assistant on the Qualcomm Dragonwing IQ-9075, fully offline: live USB camera,
+speakerphone push-to-talk, LFM3-Omni-2B on the Hexagon NPU (llama.cpp ggml-hexagon), answers grounded in a local
+knowledge base with the cited entry, spoken replies, a JSONL log and a judge display. See
+[`field-manual/README.md`](field-manual/README.md) and [`field-manual/OVERVIEW.md`](field-manual/OVERVIEW.md)
+(architecture and measured numbers).

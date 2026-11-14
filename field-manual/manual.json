@@ -1,0 +1,233 @@
+[
+ {
+  "id": 1,
+  "title": "Connect the board power adapter",
+  "step": "Plug a plus 12 volt power adapter into the 2.10 millimeter barrel jack, which supports 12 to 36 volts, using the Type-C to barrel adapter if needed.",
+  "look_for": "2.10 mm barrel jack connector labeled JPWR",
+  "source": "set-up-the-device.md#Power on the device"
+ },
+ {
+  "id": 2,
+  "title": "Connect USB0 for software flashing",
+  "step": "Connect a USB Type-C cable from the USB0 port on the board to your host device to allow software flashing.",
+  "look_for": "USB Type-C port labeled USB0",
+  "source": "set-up-the-device.md#Power on the device"
+ },
+ {
+  "id": 3,
+  "title": "Connect the debug UART cable",
+  "step": "Connect a micro-USB cable between the micro-USB port on the board and your host computer for the debug serial console.",
+  "look_for": "micro-USB port on the board",
+  "source": "set-up-the-device.md#Set up the debug UART"
+ },
+ {
+  "id": 4,
+  "title": "Check Ubuntu host serial ports",
+  "step": "Install screen on your Ubuntu host if needed and list the USB serial devices to confirm four ports appear.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Set up the debug UART"
+ },
+ {
+  "id": 5,
+  "title": "Open the main serial console",
+  "step": "Open the second serial device, ttyUSB1, at 115200 baud with screen after ensuring no other process uses it.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Set up the debug UART"
+ },
+ {
+  "id": 6,
+  "title": "Log in to the console",
+  "step": "Press Enter to bring up the login prompt and log in with the event credentials.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Set up the debug UART"
+ },
+ {
+  "id": 7,
+  "title": "Verify the Ubuntu OS version",
+  "step": "Check the OS release file to confirm the board is running Ubuntu 24.04.3 LTS.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Verify the software version"
+ },
+ {
+  "id": 8,
+  "title": "Check the Linux kernel version",
+  "step": "Run uname with the all flag to verify the Qualcomm Linux kernel version and aarch64 architecture.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Verify the software version"
+ },
+ {
+  "id": 9,
+  "title": "Connect to a Wi-Fi network",
+  "step": "Use nmcli in station mode with your network name and password to connect the board to Wi-Fi.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Wi-Fi"
+ },
+ {
+  "id": 10,
+  "title": "Find the Wi-Fi IP address",
+  "step": "Verify the Wi-Fi connection and read the assigned IP address on interface wlp1s0.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Wi-Fi"
+ },
+ {
+  "id": 11,
+  "title": "Connect Ethernet and check IP",
+  "step": "Plug an Ethernet cable into the RJ45 port on the board and check interface end0 for its IP address.",
+  "look_for": "RJ45 Ethernet port on the board",
+  "source": "set-up-the-device.md#Ethernet"
+ },
+ {
+  "id": 12,
+  "title": "Connect to the board via SSH",
+  "step": "From a host on the same network, connect over SSH as user ubuntu at the board IP address and log in with the event credentials.",
+  "look_for": "",
+  "source": "set-up-the-device.md#Connect over SSH"
+ },
+ {
+  "id": 13,
+  "title": "Connect a DisplayPort monitor",
+  "step": "Before powering on, connect a monitor to DisplayPort0 or JEDP1 using an active Mini DisplayPort to DisplayPort cable or active HDMI adapter.",
+  "look_for": "DisplayPort0 (JEDP0) or JEDP1 port, then Ubuntu server or desktop screen",
+  "source": "set-up-the-device.md#Connect a display"
+ },
+ {
+  "id": 101,
+  "title": "DS1 Green Debug LED",
+  "step": "DS1 is a green debug LED that stays off during normal operation and blinks briefly at power on, so power cycle the board if it stays lit.",
+  "look_for": "DS1 label, green LED on mainboard",
+  "source": "LED.md#LED Indicators"
+ },
+ {
+  "id": 102,
+  "title": "DS8 and DS9 Ethernet LEDs",
+  "step": "DS8 and DS9 are green Ethernet LEDs that glow solid when a link is established and blink during data transfer, so check the cable if they stay off.",
+  "look_for": "DS8 and DS9 labels, green LEDs on mainboard",
+  "source": "LED.md#LED Indicators"
+ },
+ {
+  "id": 103,
+  "title": "DS10 Green Power Regulator LED",
+  "step": "DS10 is a green LED showing that the three point three volt regulator is supplying power normally, so inspect the power rails if it stays off at boot.",
+  "look_for": "DS10 label, green LED on mainboard",
+  "source": "LED.md#LED Indicators"
+ },
+ {
+  "id": 104,
+  "title": "DS11 Orange Regulator Status LED",
+  "step": "DS11 is an orange LED for the three point three volt regulator that lights during self test and signals a warning or fault if lit during normal boot.",
+  "look_for": "DS11 label, orange LED on mainboard",
+  "source": "LED.md#LED Indicators"
+ },
+ {
+  "id": 105,
+  "title": "LED1 Software Controlled RGB LED",
+  "step": "LED1 is a software controlled RGB LED driven by GPIO pins that can show green at boot and custom status patterns once the operating system is ready.",
+  "look_for": "LED1 label, green LED on mainboard",
+  "source": "LED.md#LED Indicators"
+ },
+ {
+  "id": 106,
+  "title": "Main Power On Off Switch",
+  "step": "This side mounted slide switch is the main power control, so flip it to turn the board on or off and power cycle the device.",
+  "look_for": "Side-mounted slide or toggle switch at position 25",
+  "source": "Switches.md#Other Buttons and Switches"
+ },
+ {
+  "id": 107,
+  "title": "Reserved GPIO 6 Push Button",
+  "step": "This small push button connects to GPIO 6 and is currently inactive because it is reserved for a future software feature.",
+  "look_for": "Small push button at position 26",
+  "source": "Switches.md#Other Buttons and Switches"
+ },
+ {
+  "id": 108,
+  "title": "Red EDL and Fastboot Switch",
+  "step": "SW2 is the large red DIP switch for boot modes, and flipping switch three on puts both domains into forced USB download mode for flashing software.",
+  "look_for": "Large red DIP switch labeled SW2 on mainboard",
+  "source": "Switches.md#DIP Switches"
+ },
+ {
+  "id": 109,
+  "title": "Small Mezzanine Routing DIP Switches",
+  "step": "These smaller DIP switches below the red switch route interfaces between mainboard connectors and mezzanine cards, and all functions work with them left in the off default.",
+  "look_for": "Smaller DIP switches below the large red switch, labeled SW1, SW3, SW4, SW7, SW8, SW9",
+  "source": "Switches.md#DIP Switches"
+ },
+ {
+  "id": 110,
+  "title": "USB0 SuperSpeed Type C Port",
+  "step": "USB0 is a USB 3 SuperSpeed Type C port supporting both host and device modes, so plug in a Type C cable for peripherals or device mode.",
+  "look_for": "USB0 Type-C connector",
+  "source": "USB.md#USB"
+ },
+ {
+  "id": 111,
+  "title": "USB1 Host Type C Port",
+  "step": "USB1 is a USB 3 SuperSpeed Type C port that operates in host mode, so use it to connect USB peripherals such as cameras or hubs.",
+  "look_for": "USB1 Type-C connector",
+  "source": "USB.md#USB"
+ },
+ {
+  "id": 112,
+  "title": "USB2 Micro USB 2 Port",
+  "step": "USB2 is a USB 2 high speed micro USB port supporting both host and device modes, so connect a micro USB cable for data or peripherals.",
+  "look_for": "USB2 micro-USB connector",
+  "source": "USB.md#USB"
+ },
+ {
+  "id": 113,
+  "title": "JFAN CPU Cooler Fan Header",
+  "step": "JFAN is the PWM fan connector on the mainboard where the bottom mounted CPU cooler fan plugs in for automatic temperature controlled cooling.",
+  "look_for": "JFAN connector on mainboard",
+  "source": "Fan.md#Fan"
+ },
+ {
+  "id": 114,
+  "title": "JLS1 40 Pin Expansion Header",
+  "step": "JLS1 is the 40 pin low speed expansion header providing three point three volt GPIOs, CAN, UART, I2C, and SPI, so attach external sensors or jumpers carefully.",
+  "look_for": "JLS1 40-pin header on mainboard",
+  "source": "Low-Speed-Connectors.md#40 Pin Low Speed Connector"
+ },
+ {
+  "id": 115,
+  "title": "Dual RJ45 2.5G Ethernet Ports",
+  "step": "These dual RJ45 ports provide two point five gigabit Ethernet networking, so plug in standard Ethernet cables for wired network access.",
+  "look_for": "RJ45 Ethernet ports on mainboard",
+  "source": "device-overview.md#Hardware Specifications"
+ },
+ {
+  "id": 116,
+  "title": "Mini DisplayPort Video Output Ports",
+  "step": "These two mini DisplayPort connectors output video with one supporting multi stream transport, so connect the included mini DisplayPort to DisplayPort cable for external displays.",
+  "look_for": "Two mini-DP ports on mainboard",
+  "source": "device-overview.md#Hardware Specifications"
+ },
+ {
+  "id": 117,
+  "title": "Mainboard Micro SD Card Slot",
+  "step": "This micro SD card slot provides removable storage on the mainboard when switch SW1 3 is off, so insert a micro SD card for extra storage.",
+  "look_for": "",
+  "source": "device-overview.md#Hardware Specifications"
+ },
+ {
+  "id": 118,
+  "title": "Mainboard PCIe x4 Expansion Slot",
+  "step": "This PCIe four lane slot on the mainboard accepts expansion cards, such as the included PCIe edge card adapter for NVMe storage.",
+  "look_for": "",
+  "source": "device-overview.md#Hardware Specifications"
+ },
+ {
+  "id": 119,
+  "title": "Four MIPI CSI Camera Connectors",
+  "step": "These four CSI camera interfaces connect C PHY or D PHY cameras to the mainboard when the corresponding SW1 switches are off.",
+  "look_for": "Camera interfaces on mainboard",
+  "source": "device-overview.md#Hardware Specifications"
+ },
+ {
+  "id": 120,
+  "title": "Mainboard Power Input Barrel Plug",
+  "step": "This power plug supplies mainboard power, so connect the included power supply using the Type C to barrel plug adapter before turning on the power switch.",
+  "look_for": "Power plug on mainboard",
+  "source": "device-overview.md#Introduction"
+ }
+]

@@ -1,0 +1,106 @@
+[
+  {
+    "id": 1,
+    "title": "Connect the board power adapter",
+    "step": "Plug a plus 12 volt power adapter into the 2.10 millimeter barrel jack, which supports 12 to 36 volts, using the Type-C to barrel adapter if needed.",
+    "look_for": "2.10 mm barrel jack connector labeled JPWR",
+    "command": "",
+    "source": "set-up-the-device.md#Power on the device"
+  },
+  {
+    "id": 2,
+    "title": "Connect USB0 for software flashing",
+    "step": "Connect a USB Type-C cable from the USB0 port on the board to your host device to allow software flashing.",
+    "look_for": "USB Type-C port labeled USB0",
+    "command": "",
+    "source": "set-up-the-device.md#Power on the device"
+  },
+  {
+    "id": 3,
+    "title": "Connect the debug UART cable",
+    "step": "Connect a micro-USB cable between the micro-USB port on the board and your host computer for the debug serial console.",
+    "look_for": "micro-USB port on the board",
+    "command": "",
+    "source": "set-up-the-device.md#Set up the debug UART"
+  },
+  {
+    "id": 4,
+    "title": "Check Ubuntu host serial ports",
+    "step": "Install screen on your Ubuntu host if needed and list the USB serial devices to confirm four ports appear.",
+    "look_for": "",
+    "command": "ls /dev/ttyUSB*",
+    "source": "set-up-the-device.md#Set up the debug UART"
+  },
+  {
+    "id": 5,
+    "title": "Open the main serial console",
+    "step": "Open the second serial device, ttyUSB1, at 115200 baud with screen after ensuring no other process uses it.",
+    "look_for": "",
+    "command": "sudo screen /dev/ttyUSB1 115200",
+    "source": "set-up-the-device.md#Set up the debug UART"
+  },
+  {
+    "id": 6,
+    "title": "Log in to the console",
+    "step": "Press Enter to bring up the login prompt and log in with the event credentials.",
+    "look_for": "",
+    "command": "",
+    "source": "set-up-the-device.md#Set up the debug UART"
+  },
+  {
+    "id": 7,
+    "title": "Verify the Ubuntu OS version",
+    "step": "Check the OS release file to confirm the board is running Ubuntu 24.04.3 LTS.",
+    "look_for": "",
+    "command": "cat /etc/os-release",
+    "source": "set-up-the-device.md#Verify the software version"
+  },
+  {
+    "id": 8,
+    "title": "Check the Linux kernel version",
+    "step": "Run uname with the all flag to verify the Qualcomm Linux kernel version and aarch64 architecture.",
+    "look_for": "",
+    "command": "uname -a",
+    "source": "set-up-the-device.md#Verify the software version"
+  },
+  {
+    "id": 9,
+    "title": "Connect to a Wi-Fi network",
+    "step": "Use nmcli in station mode with your network name and password to connect the board to Wi-Fi.",
+    "look_for": "",
+    "command": "sudo nmcli dev wifi connect <WiFi-SSID> password <WiFi-password>",
+    "source": "set-up-the-device.md#Wi-Fi"
+  },
+  {
+    "id": 10,
+    "title": "Find the Wi-Fi IP address",
+    "step": "Verify the Wi-Fi connection and read the assigned IP address on interface wlp1s0.",
+    "look_for": "",
+    "command": "ip addr show wlp1s0",
+    "source": "set-up-the-device.md#Wi-Fi"
+  },
+  {
+    "id": 11,
+    "title": "Connect Ethernet and check IP",
+    "step": "Plug an Ethernet cable into the RJ45 port on the board and check interface end0 for its IP address.",
+    "look_for": "RJ45 Ethernet port on the board",
+    "command": "ip addr show end0",
+    "source": "set-up-the-device.md#Ethernet"
+  },
+  {
+    "id": 12,
+    "title": "Connect to the board via SSH",
+    "step": "From a host on the same network, connect over SSH as user ubuntu at the board IP address and log in with the event credentials.",
+    "look_for": "",
+    "command": "ssh ubuntu@<ip-address>",
+    "source": "set-up-the-device.md#Connect over SSH"
+  },
+  {
+    "id": 13,
+    "title": "Connect a DisplayPort monitor",
+    "step": "Before powering on, connect a monitor to DisplayPort0 or JEDP1 using an active Mini DisplayPort to DisplayPort cable or active HDMI adapter.",
+    "look_for": "DisplayPort0 (JEDP0) or JEDP1 port, then Ubuntu server or desktop screen",
+    "command": "",
+    "source": "set-up-the-device.md#Connect a display"
+  }
+]
