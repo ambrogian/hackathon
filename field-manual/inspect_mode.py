@@ -174,7 +174,12 @@ def check_once(args, alarmed=False, first=False, ref_png_cache={}):
         stage(stage='input', verdict=None, p=None, frame='runs/_monitor/input.jpg', run=None)
         time.sleep(3)
     if _d1 is None:
-        _d1 = D1(); T['d1_load_s'] = round(time.monotonic() - t, 3); t = time.monotonic()
+        try:
+            _d1 = D1()
+        except Exception as e:
+            stage(stage='error', error='d1 could not load on the NPU (%s). Reboot the board to recover.' % str(e)[:160], frame='runs/_monitor/input.jpg')
+            raise
+        T['d1_load_s'] = round(time.monotonic() - t, 3); t = time.monotonic()
     key = str(good.stat().st_mtime)
     if ref_png_cache.get('k') != key:
         png512(good, run / 'ref.png'); ref_png_cache.update(k=key, p=(run / 'ref.png').read_bytes())
