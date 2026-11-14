@@ -248,7 +248,7 @@ class Handler(BaseHTTPRequestHandler):
             page = ('<!doctype html><meta charset="utf-8"><title>Architecture</title>'
                     '<body style="margin:0;background:#0d1117;color:#e6edf3;font-family:system-ui,sans-serif">'
                     '<header style="display:flex;gap:24px;align-items:center;padding:14px 22px;background:#161b22">'
-                    '<h1 style="margin:0;font-size:26px">Field Manual &middot; Architecture</h1>' + '<nav style="display:flex;gap:14px;font-size:20px"><a href="/" style="color:#9cf">Turns</a><a href="/monitor" style="color:#9cf">Monitor</a><a href="/architecture" style="color:#9cf">Architecture</a></nav>' + '</header>'
+                    '<h1 style="margin:0;font-size:26px">Field Manual &middot; Architecture</h1>' + '<nav style="display:flex;gap:14px;font-size:20px"><a href="/monitor" style="color:#9cf">Monitor</a><a href="/architecture" style="color:#9cf">Architecture</a></nav>' + '</header>'
                     '<main style="padding:18px;background:#fff;margin:18px;border-radius:10px">' + body + '</main></body>')
             self.send(200, page.encode(), 'text/html; charset=utf-8')
         elif path == '/api/images':
@@ -313,7 +313,7 @@ li{padding:8px 12px;border-bottom:1px solid #223;font-size:20px;display:grid;gri
 li:first-child{background:#162130}.t{color:#8fa3b8}
 footer{padding:0 22px 22px}.sec{max-height:300px;overflow:auto}
 </style></head><body>
-<header><h1>Dead-Zone Field Manual</h1><nav style="display:flex;gap:14px;font-size:20px"><a href="/" style="color:#9cf">Turns</a><a href="/monitor" style="color:#9cf">Monitor</a><a href="/architecture" style="color:#9cf">Architecture</a></nav><span class="badge" id="npu">on-device &middot; NPU</span>
+<header><h1>Dead-Zone Field Manual</h1><nav style="display:flex;gap:14px;font-size:20px"><a href="/monitor" style="color:#9cf">Monitor</a><a href="/architecture" style="color:#9cf">Architecture</a></nav><span class="badge" id="npu">on-device &middot; NPU</span>
 <span>Wi-Fi off since: <b id="wifi">not set</b></span>
 <button id="wbtn">Wi-Fi is off now</button><button id="wedit">edit</button><span id="clock"></span></header>
 <main><section><img id="frame" alt="latest captured frame" hidden><div id="noframe" class="lbl">Waiting for first turn&hellip; press Enter on the board.</div>
@@ -379,7 +379,7 @@ main{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:22px}
 .box{margin-top:20px;padding:14px;border:2px dashed #456;border-radius:12px;color:#8fa3b8}
 #err{color:#ff8a80;font-size:18px}
 </style></head><body>
-<header><h1>Field Manual &middot; Monitor</h1><nav style="display:flex;gap:14px;font-size:20px"><a href="/" style="color:#9cf">Turns</a><a href="/monitor" style="color:#9cf">Monitor</a><a href="/architecture" style="color:#9cf">Architecture</a></nav><button id="bm">Monitor</button><select id="pick" style="font-size:18px;max-width:340px;margin-left:8px"><option value="">live input</option></select><button id="ba">Analyze</button><button id="br">Reset</button></header>
+<header><h1>Field Manual &middot; Monitor</h1><nav style="display:flex;gap:14px;font-size:20px"><a href="/monitor" style="color:#9cf">Monitor</a><a href="/architecture" style="color:#9cf">Architecture</a></nav><button id="bm">Monitor</button><select id="pick" style="font-size:18px;max-width:340px;margin-left:8px"><option value="">live input</option></select><button id="ba">Analyze</button><button id="br">Reset</button></header>
 <main><section><div class="pair"><figure><figcaption class="good">Control: GOOD reference</figcaption><img id="ref" src="/ref/good.jpg" alt="control"></figure>
 <figure><figcaption id="cap">Live input</figcaption><img id="img" alt="input" hidden></figure></div><div id="err"></div></section>
 <section><div id="status">Waiting&hellip;</div><div id="text"></div><div id="tm"></div>
