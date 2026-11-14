@@ -379,12 +379,13 @@ def main():
     parser.add_argument('--loop', action='store_true', help='Hands-free: listen continuously (mute-button push-to-talk), no Enter')
     parser.add_argument('--asr-late', action='store_true', help='Run ASR after the answer (saves ~0.3 s, but answers were less reliable in testing)')
     parser.add_argument('--no-speak', action='store_true', help='Display and log without TTS/playback')
+    parser.add_argument('--manual', default='manual-extrusion.json', help='Card file: manual-extrusion.json (PC sheet line defects, default) or manual-iq9.json (IQ-9075 board setup, LEDs, connectors)')
     args = parser.parse_args()
     if not math.isfinite(args.seconds) or not 0 < args.seconds <= 30:
         parser.error('--seconds must be greater than zero and at most 30')
     if args.text is not None and args.audio:
         parser.error('--text and --audio are mutually exclusive')
-    cards_list = json.loads((ROOT / 'manual.json').read_text())
+    cards_list = json.loads((ROOT / args.manual).read_text())
     cards = {c['id']: c for c in cards_list}
     if len(cards) != len(cards_list):
         parser.error('Manual contains duplicate IDs')
