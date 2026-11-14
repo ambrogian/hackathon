@@ -83,6 +83,9 @@ def make_report(m, d, base_url=None):
     except Exception as e:  # network, timeout, bad JSON: fall back, never fail the demo
         return base, f"template (llm error: {type(e).__name__})"
     bad = check_numbers(out, m)
+    t = out.strip()
+    if t and (any(c in t for c in "*#`|<>") or t.startswith("-") or "\n-" in t or "Load percent" in t or not t[0].isalpha()):
+        return base, "template (llm text rejected: format, not a work-order sentence)"  # echoed evidence or markdown, not prose
     if bad or not out.strip() or len(out) > 700:
         return base, f"template (llm text rejected: numbers {bad[:3]})" if bad else "template (llm text rejected)"
     return out.strip(), "llm"

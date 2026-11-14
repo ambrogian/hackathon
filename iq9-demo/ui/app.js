@@ -262,7 +262,7 @@ function panelBoard(d) {
 }
 function lineOf(r) {
   const d = r.decision || {}, m = r.measure || {};
-  return `${hhmmss(r.ts)} ${(r.asset || "").padEnd(3)} ${(d.label || "ERROR").padEnd(12)} ${((r.action || {}).name || "-").padEnd(20)} dT ${fmt(m.dt_c).padStart(5)} coh ${fmt(m.coherence, 2)} ${r.ms_total} ms${r.error ? " ERR " + r.error : ""}`;
+  return `${hhmmss(r.ts)} ${(r.asset || "").padEnd(3)} ${(d.label || "ERROR").padEnd(12)} ${((r.action || {}).name || "-").padEnd(20)} ${r.kind === "line" ? (m.headline || "signals normal").slice(0, 60).padEnd(60) : `dT ${fmt(m.dt_c).padStart(5)} coh ${fmt(m.coherence, 2)}`} ${r.ms_total} ms${r.error ? " ERR " + r.error : ""}`;
 }
 async function openSandbox() {
   setConsoleMode("sandbox");
@@ -315,7 +315,7 @@ async function validate() {
 async function openLog() {
   logSeq = 0; logRows = [];
   const bar = $("logbar"); bar.replaceChildren();
-  const chips = ["", "sg1", "sg2", "sg3", "sg4", "c1"];
+  const chips = ["", ...plant.assets.map((a) => a.id)];  // every asset: switchgear, compressor, extrusion zones, edge board
   for (const c of chips) bar.append(el("button", { textContent: c ? c.toUpperCase() : "All", className: logAsset === c ? "on" : "", onclick: () => { logAsset = c; openLog(); } }));
   bar.append(el("span", { className: "spacer" }),
     el("button", { textContent: logPaused ? "Resume" : "Pause", className: logPaused ? "on" : "", onclick: (e) => { logPaused = !logPaused; e.target.textContent = logPaused ? "Resume" : "Pause"; e.target.classList.toggle("on", logPaused); } }),
@@ -341,7 +341,7 @@ function paintLog() {
     const tr = el("tr", { className: "L-" + (d.label || "ERR"), onclick: () => go("asset/" + r.asset) },
       el("td", { textContent: hhmmss(r.ts) }), el("td", { textContent: (r.asset || "").toUpperCase() }), el("td", { textContent: d.label || "ERROR" }),
       el("td", { textContent: `${(r.action || {}).name || "-"}${(r.action || {}).status && r.action.status !== "executed" ? " (" + r.action.status + ")" : ""}` }),
-      el("td", { textContent: fmt(m.dt_c) }), el("td", { textContent: fmt(m.coherence, 2) }), el("td", { textContent: r.ms_total }),
+      el("td", { textContent: r.kind === "line" ? "-" : fmt(m.dt_c) }), el("td", { textContent: r.kind === "line" || r.kind === "board" ? "-" : fmt(m.coherence, 2) }), el("td", { textContent: r.ms_total }),
       el("td", { className: "txt", textContent: r.error || r.report || "" }));
     tb.append(tr);
   }
