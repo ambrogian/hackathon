@@ -1,0 +1,3 @@
+/* Palette (dark theme) taken from the colour values in the anchor repo's showcase/template.html (github.com/ambrogian/hackathon, no license:
+   only the hex colour values are reused, no code, markup or fonts). Overrides mock.css tokens for mocks D and E. */
+:root{--bg:#0E1418;--panel:#162027;--hl:#2B3842;--ink:#E4EAEE;--mute:#93A2AC;--dim:#7F909C;--sig:#6DB3DB;--fault:#F06A5E;--ok:#3DBE84;--mayb:#F2B33D}
