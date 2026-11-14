@@ -16,7 +16,7 @@ SAYS: Each still hits d1 first—good frames score 0.88 to 0.98, and it makes th
 
 5. 1:00 - Red box, explanation, and KB step
 [Approximate red bounding box, Omni's inspection sentence, and the matched knowledge-base step appear]
-SAYS: That triggers Omni, which outputs an inspection sentence and an approximate red bounding box in about 8 seconds, matched to our offline 16-defect extrusion knowledge base for the operator step.
+SAYS: That triggers Omni, which outputs an inspection sentence and an approximate red bounding box in about 8 seconds. For the operator's next step, the voice field manual answers from our offline 17-defect extrusion knowledge base.
 
 6. 1:20 - Push-to-talk and NPU numbers
 [Use the speakerphone mute button as push-to-talk to ask a question; the spoken answer plays]
@@ -26,4 +26,4 @@ SAYS: The speakerphone mute button is push-to-talk for follow-ups. On the NPU, O
 SAYS: Why not a cloud API call? There is no connectivity on the plant floor, and the line needs a sub-second local decision.
 
 8. 1:50 - What's next
-SAYS: Next, we'll replace the general values in our 16-defect knowledge base with a real line's setpoints reviewed by a process engineer.
+SAYS: Next, we'll replace the general values in our 17-defect knowledge base with a real line's setpoints reviewed by a process engineer.
