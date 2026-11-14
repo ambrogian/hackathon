@@ -71,7 +71,7 @@ function paintD1(id, d1) {
       ...(d1.p_hotspot_image != null ? [["Hotspot in the picture", pct(d1.p_hotspot_image)]] : []), ["Latency", `${d1.ms.state} ms text` + (d1.vision ? ` · ${d1.ms.image} ms image · ${d1.ms.fused || 0} ms fused` : "")], ["Output tokens", d1.output_tokens]]
       .flatMap(([k, v]) => [el("dt", { textContent: k }), el("dd", { textContent: String(v) })])));
     const bars = (title, probs, names) => {
-      const entries = Array.isArray(probs) ? probs.map((v, i) => [names ? names[i] : String(i), v]) : Object.entries(probs || {});
+      const entries = Array.isArray(probs) ? probs.map((v, i) => [names ? names[i] : String(i), v]) : Object.entries(probs || {}).map(([k, v]) => [names && /^\d+$/.test(k) ? names[+k] : k, v]);
       c.append(el("small", { textContent: title }), ...entries.map(([k, v]) => el("div", { className: "pbar" }, el("span", { textContent: k }), el("i", { style: `width:${(v * 100).toFixed(0)}%` }), el("em", { textContent: pct(v) }))));
     };
     if (d1.fused && d1.fused.severity_probs) bars("Severity probabilities (image + text)", d1.fused.severity_probs, ["Low", "Moderate", "Critical"]);
