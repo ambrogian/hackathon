@@ -109,6 +109,11 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        # Refuse other Host names (DNS rebinding): only the loopback names this server is reached by.
+        host = (self.headers.get('Host') or '').rsplit(':', 1)[0]
+        if host not in ('127.0.0.1', 'localhost'):
+            self.send_error(421)
+            return
         path = unquote(urlsplit(self.path).path)
         if path in ('/', '/index.html'):
             self.send(200, PAGE.encode(), 'text/html; charset=utf-8')
