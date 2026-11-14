@@ -20,7 +20,7 @@ import ask as askmod  # noqa: E402
 import plant as plantmod  # noqa: E402
 
 UI = os.path.join(HERE, "ui")
-CSP = "default-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'"
+CSP = "default-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
 TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
          ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".png": "image/png"}
 STATE = {"decider": None, "llm": None, "job": {"state": "idle"}, "lock": threading.Lock()}
@@ -47,6 +47,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Security-Policy", CSP)
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
@@ -69,7 +70,7 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/plant":
                 return self._json(STATE["plant"].state())
             if u.path == "/api/log":
-                return self._json(STATE["plant"].log(int(q.get("after", 0)), q.get("asset") or None, min(int(q.get("n", 80)), 500)))
+                return self._json(STATE["plant"].log(int(q.get("after", 0)), q.get("asset") or None, max(1, min(int(q.get("n", 80)), 500))))
             if u.path == "/api/asset":
                 return self._json(STATE["plant"].asset_run(q.get("asset", "")))
             if u.path == "/api/incidents":

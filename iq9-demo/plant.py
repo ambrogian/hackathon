@@ -93,7 +93,7 @@ class Plant:
         self.log_path = log_path or os.path.join(HERE, "out", f"live_log_{self.stamp}.jsonl")
         self.orders_path = os.path.join(HERE, "out", f"live_orders_{self.stamp}.jsonl")
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
-        self.buf = collections.deque(maxlen=3000)
+        self.buf = collections.deque(maxlen=12000)  # about 40 min of 10 assets at 2 s, so incidents stay replayable
         self.seq = 0
         self.tick = 0
         self.t0 = time.time()
