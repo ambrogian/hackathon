@@ -23,4 +23,4 @@ Open http://127.0.0.1:8088. Views: architecture (clickable building), asset cons
 ## Layout
 `server.py` HTTP + UI, `plant.py` live plant loop, `agent.py` observe-decide-act-explain-log, `ask.py` tool calling with allowlist and policy, `extrusion.py` line scenarios and knowledge lookup, `iq9sim/` simulators, rules, LFM client and d1 service, `ui/` console (local fonts), `tests/`, `tools/d1_probe.py`, `logs/` d1 evidence. Mocks are in `../iq9-mocks/`.
 
-(c) Aavinos LLC, Mind Theory AI, and Christian Camacho-Martinez. All rights reserved.
+License: MIT (see `LICENSE`), (c) Aavinos LLC, Mind Theory AI, and Christian Camacho-Martinez. Third-party parts keep their own licenses: see `THIRD_PARTY_NOTICES.md`; `models/d1-2B/` is under Liquid AI's LFM Open License v1.0.

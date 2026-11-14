@@ -13,4 +13,4 @@ Colour values come from the dark theme in `showcase/template.html`.
 Mocks D and E: d1 fault 0.93 and Critical are measured from a live run on a laptop CPU; the other probability bars are illustrative. Signals are simulated. No board numbers yet.
 The `.html` mocks use `mock.css` and `mock-pal.css`; fonts fall back to system fonts here.
 
-(c) Aavinos LLC, Mind Theory AI, and Christian Camacho-Martinez. All rights reserved. Contributed for this hackathon showcase.
+License: MIT (see `LICENSE`), (c) Aavinos LLC, Mind Theory AI, and Christian Camacho-Martinez.
