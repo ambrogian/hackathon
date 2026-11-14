@@ -1,7 +1,7 @@
 """Validate the knowledge base and render it.
 
 Outputs:
-  KNOWLEDGE_BASE.md  - readable version for people (review, demo slides)
+  docs/KNOWLEDGE_BASE.md - readable version for people (review, demo slides)
   kb/context.txt     - compact version to put in the local model's prompt
 
 Run: python3 kb/build.py
@@ -68,7 +68,7 @@ for d in defects:
     if d["confusable_with"]:
         md.append(f"**Don't confuse with:** {'; '.join(d['confusable_with'])}")
     md.append("")
-(ROOT / "KNOWLEDGE_BASE.md").write_text("\n".join(md))
+(ROOT / "docs" / "KNOWLEDGE_BASE.md").write_text("\n".join(md))
 
 # --- context.txt (compact, for the model prompt) ----------------------------
 ctx = [f"LINE: {line['line']}", "ZONES (in flow order):"]
