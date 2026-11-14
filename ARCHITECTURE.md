@@ -25,6 +25,7 @@ flowchart LR
   MIC --> OMNI
   KB --> OMNI
   D1 -->|verdict| DASH
+  D1 -->|BAD triggers| OMNI
   OMNI --> FF
   OMNI --> SPK
   OMNI --> LOG

@@ -2,6 +2,18 @@
 
 Offline troubleshooting assistant for a polycarbonate sheet extrusion line. An operator photographs a defect; a local vision model on a Qualcomm device names it and tells the operator where on the line to intervene.
 
+## Demo on the IQ-9075
+
+![Monitor dashboard on the IQ-9075: d1 flags BAD 0.04 against the GOOD control, Omni boxes the spill and explains it](docs/images/dashboard-monitor.png)
+
+d1-2B on the NPU compares the frame with the GOOD control image (481 ms). On BAD, LFM3-Omni-2B on the NPU
+explains the fault and boxes it (8.6 s), and ffmpeg draws the box (39 ms). All of it runs on the board with Wi-Fi off.
+The line images are stills from the team's demo videos, not a real plant.
+
+![Architecture](docs/images/architecture.png)
+
+Details: [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ## Knowledge base
 
 | File | What it is |
