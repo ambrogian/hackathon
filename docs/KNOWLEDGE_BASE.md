@@ -34,6 +34,7 @@ Diagram: images/candidates/km_sheetline_labeled-04.png + -05.png (KraussMaffei s
 
 | Pattern | Check these defects |
 |---|---|
+| no sheet in the roll stack: melt pouring off the die or rolls into the tray | melt_dumping_not_threaded |
 | continuous straight lines along the sheet (machine direction), fixed position | die_lines, roll_scratches_marks |
 | regular evenly spaced lines across the width (transverse) | chatter_marks, thickness_surging_md, sticking_to_rolls |
 | random spots or particles in the sheet | moisture_bubbles_splay, black_specks, gels_unmelts_contamination |
@@ -436,3 +437,30 @@ Diagram: images/candidates/km_sheetline_labeled-04.png + -05.png (KraussMaffei s
 
 **Fixed when:** UV lamp check shows even coverage.  
 **Escalate if:** Coverage uneven with co-extruder running correctly: process engineer.
+
+### Melt dumping / sheet not threaded into roll stack (`melt_dumping_not_threaded`)
+
+**What it looks like:** The melt curtain leaving the flat sheet die (Z6) is not entering the first nip of the polishing roll stack (Z7), or the sheet has broken at the rolls. Molten polycarbonate is pouring or piling off the die lips or rolls into the catch tray below.
+
+**Where it starts:** Z6 Flat sheet die, Z7 Polishing roll stack (3-roll calender)  
+**Severity:** line_stop
+
+**Likely causes (most likely first):**
+
+- Line is in startup and the melt curtain has not yet been threaded into the polishing roll stack (Z7)
+- Sheet break at the roll stack (Z7) or downstream at the haul-off (Z11) caused by a speed mismatch, roll drive trip, or cold/stuck wrap on roll 1/2/3
+- Roll stack (Z7) retracted or nip gap opened too wide, letting the melt curtain drop straight through
+- Sudden melt viscosity drop or pressure surge from the gear pump (Z4) / extruder (Z2) tearing the curtain before it reaches the first nip
+
+**Operator steps:**
+
+1. Keep hands and tools completely clear of the roll stack nip (Z7) and die lips (Z6). Never reach into a running nip or touch the hot die (around 300 °C) to guide molten plastic.
+2. Wear heat-resistant gloves, sleeves, and a face shield before approaching Z6-Z7.
+3. Call the shift lead immediately to coordinate a safe line slowdown, stop, or re-threading.
+4. Follow the plant's threading procedure: reduce extruder/gear pump (Z4) output or put the line in safe standby/purge as instructed, and retract the roll stack (Z7) if required by procedure.
+5. Check roll stack (Z7) drives, nip gap, and roll temperatures (TCUs) to confirm why the sheet broke or failed to feed before attempting to re-thread.
+6. Allow purged molten PC in the catch tray to cool safely per plant procedure before clearing, and re-thread only with trained crew using the approved threading tools and procedure.
+
+**Fixed when:** The melt curtain feeds cleanly into the first nip of the polishing roll stack (Z7), forms a stable melt bank across the width, and the sheet travels smoothly through the roll stack and haul-off (Z11) with no material dropping into the catch tray.  
+**Escalate if:** Roll drives, gearboxes, or TCUs at Z7 fault or will not hold speed/gap, or if the curtain repeatedly tears during threading: keep the line in safe standby and call maintenance and the shift lead.
+**Don't confuse with:** sticking_to_rolls

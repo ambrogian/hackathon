@@ -1,0 +1,121 @@
+[
+ {
+  "id": 201,
+  "title": "Bubbles, voids and silver streaks (splay)",
+  "step": "Bubbles, voids and silver streaks (splay). Check Z1 Resin drying and feeding and Z2 Main extruder: Check the dryer panel: actual temperature at setpoint (typical PC about 120 \u00b0C) and dew point at -40 \u00b0C or lower. Note any dryer alarm.",
+  "look_for": "Small round or elongated bubbles inside the sheet, spread across the whole width; silvery streaks running along the sheet. Sheet may look slightly hazy.",
+  "source": "kb/defects.json#moisture_bubbles_splay"
+ },
+ {
+  "id": 202,
+  "title": "Yellowing / thermal degradation",
+  "step": "Yellowing / thermal degradation. Check Z2 Main extruder and Z6 Flat sheet die and Z1 Resin drying and feeding: Compare actual vs setpoint on every barrel, adapter and die zone. Look for one zone running hotter than set or a reading that does not change.",
+  "look_for": "Yellow to brown tint across the sheet or in streaks. Compare against a good sample on a white background. Often comes with black specks or bubbles.",
+  "source": "kb/defects.json#yellowing_degradation"
+ },
+ {
+  "id": 203,
+  "title": "Black or brown specks",
+  "step": "Black or brown specks. Check Z2 Main extruder and Z3 Melt filtration and Z4 Gear pump (melt pump) and Z6 Flat sheet die: Check pressure before and after the screen changer. Change the screen if the difference is high, or if it is suddenly low (possible torn screen).",
+  "look_for": "Small dark particles in the sheet, randomly placed, sometimes in bursts. Often after a restart or a temperature change.",
+  "source": "kb/defects.json#black_specks"
+ },
+ {
+  "id": 204,
+  "title": "Gels, unmelted particles, foreign material",
+  "step": "Gels, unmelted particles, foreign material. Check Z1 Resin drying and feeding and Z2 Main extruder and Z3 Melt filtration: Check the screen changer pressure difference and change the screen if needed.",
+  "look_for": "Clear or whitish specks or lumps ('fish eyes'), sometimes with a small tail; hazy spots from a foreign polymer.",
+  "source": "kb/defects.json#gels_unmelts_contamination"
+ },
+ {
+  "id": 205,
+  "title": "Die lines",
+  "step": "Die lines. Check Z6 Flat sheet die: Measure the line's position from the sheet edge. That is where to look on the die lip.",
+  "look_for": "Thin straight lines running along the sheet (machine direction), at the same position across the width all the time. They do not move and are visible through the sheet, not only on one surface.",
+  "source": "kb/defects.json#die_lines"
+ },
+ {
+  "id": 206,
+  "title": "Thickness variation across the width",
+  "step": "Thickness variation across the width. Check Z6 Flat sheet die and Z7 Polishing roll stack (3-roll calender): Read the thickness gauge profile, or measure at several points across the width.",
+  "look_for": "Bands of optical distortion along the sheet, wavy look when viewed at an angle; thickness gauge profile not flat; one side thicker than the other.",
+  "source": "kb/defects.json#thickness_variation_cd"
+ },
+ {
+  "id": 207,
+  "title": "Thickness pulsing along the length (surging)",
+  "step": "Thickness pulsing along the length (surging). Check Z1 Resin drying and feeding and Z2 Main extruder and Z4 Gear pump (melt pump) and Z11 Haul-off (pull rolls): Check the hopper level and material flow at the feed throat.",
+  "look_for": "Thickness goes up and down along the sheet, giving bands across the full width that repeat every few seconds to minutes; may look like wide soft transverse waves.",
+  "source": "kb/defects.json#thickness_surging_md"
+ },
+ {
+  "id": 208,
+  "title": "Chatter marks",
+  "step": "Chatter marks. Check Z7 Polishing roll stack (3-roll calender) and Z11 Haul-off (pull rolls) and Z6 Flat sheet die: Measure the spacing between marks. Compare with roll circumference and drive parts: the matching spacing points to the component.",
+  "look_for": "Fine, evenly spaced lines across the width, repeating at a regular short interval (millimetres to a few centimetres).",
+  "source": "kb/defects.json#chatter_marks"
+ },
+ {
+  "id": 209,
+  "title": "Dull surface, haze, orange peel",
+  "step": "Dull surface, haze, orange peel. Check Z7 Polishing roll stack (3-roll calender): Check each roll's temperature control unit: actual vs setpoint.",
+  "look_for": "Low gloss or matte patches, uneven reflection, fine bumpy 'orange peel' texture when a light is reflected in the surface.",
+  "source": "kb/defects.json#dull_surface_orange_peel"
+ },
+ {
+  "id": 210,
+  "title": "Flow lines, V-marks, bank marks",
+  "step": "Flow lines, V-marks, bank marks. Check Z7 Polishing roll stack (3-roll calender) and Z6 Flat sheet die: Look at the melt bank between roll 1 and roll 2 from the safe viewing position.",
+  "look_for": "Wavy, V-shaped or irregular lines that move and change, often near the center or edges.",
+  "source": "kb/defects.json#flow_lines_bank_marks"
+ },
+ {
+  "id": 211,
+  "title": "Sheet sticking to rolls",
+  "step": "Sheet sticking to rolls. Check Z7 Polishing roll stack (3-roll calender): Identify which roll the sheet sticks to.",
+  "look_for": "Sheet follows a roll past the normal release point; transverse release marks or tear marks on the surface; release line on the roll is uneven.",
+  "source": "kb/defects.json#sticking_to_rolls"
+ },
+ {
+  "id": 212,
+  "title": "Warp, bow, built-in stress",
+  "step": "Warp, bow, built-in stress. Check Z7 Polishing roll stack (3-roll calender) and Z8 Cooling conveyor (roller table) and Z11 Haul-off (pull rolls): Note which way the sheet curls (up or down) and whether it is edges or center.",
+  "look_for": "Sheet not flat on the conveyor or stack: edges curling up or down, bowing, waviness. Optical distortion under polarized light.",
+  "source": "kb/defects.json#warp_bow_stress"
+ },
+ {
+  "id": 213,
+  "title": "Cracked edges, cracks at the cut",
+  "step": "Cracked edges, cracks at the cut. Check Z9 Edge trim and Z12 Cross-cut saw and stacker: Check trim knives and saw blade condition (lockout first). Replace if dull or chipped.",
+  "look_for": "Cracks starting at the sheet edge or the cut line, chipped or whitened edges, rough cut faces.",
+  "source": "kb/defects.json#edge_and_cut_cracks"
+ },
+ {
+  "id": 214,
+  "title": "Protective (masking) film defects",
+  "step": "Protective (masking) film defects. Check Z10 Protective film laminator: Check film unwind tension; adjust in small steps.",
+  "look_for": "Wrinkles or trapped air bubbles under the masking film, film not covering the edge, film lifting or misaligned.",
+  "source": "kb/defects.json#protective_film_defects"
+ },
+ {
+  "id": 215,
+  "title": "Roll scratches and repeating roll marks",
+  "step": "Roll scratches and repeating roll marks. Check Z7 Polishing roll stack (3-roll calender) and Z8 Cooling conveyor (roller table) and Z11 Haul-off (pull rolls): Measure the distance between repeating marks and compare it with roll circumferences to find the roll.",
+  "look_for": "Sharp lines along the sheet on one surface only, or marks that repeat at a fixed distance along the sheet.",
+  "source": "kb/defects.json#roll_scratches_marks"
+ },
+ {
+  "id": 216,
+  "title": "UV layer missing or uneven",
+  "step": "UV layer missing or uneven. Check Z5 UV co-extruder and feedblock: Check the co-extruder is running and its hopper has material.",
+  "look_for": "Not visible in a normal photo. Under a UV lamp the protected surface looks different; gaps show as bright or dark areas.",
+  "source": "kb/defects.json#uv_layer_defects"
+ },
+ {
+  "id": 217,
+  "title": "Melt dumping / sheet not threaded into roll stack",
+  "step": "Melt dumping / sheet not threaded into roll stack. Check Z6 Flat sheet die and Z7 Polishing roll stack (3-roll calender): Keep hands and tools completely clear of the roll stack nip (Z7) and die lips (Z6). Never reach into a running nip or touch the hot die (around 300 \u00b0C) to guide molten plastic.",
+  "look_for": "The melt curtain leaving the flat sheet die (Z6) is not entering the first nip of the polishing roll stack (Z7), or the sheet has broken at the rolls. Molten polycarbonate is pouring or piling off the die lips or rolls into the catch tray below.",
+  "source": "kb/defects.json#melt_dumping_not_threaded"
+ }
+]

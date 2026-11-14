@@ -2,3 +2,5 @@ images/candidates/
 .DS_Store
 __pycache__/
 *.pyc
+field-manual/live/
+field-manual/runs/

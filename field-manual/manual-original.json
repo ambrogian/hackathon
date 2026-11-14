@@ -1,0 +1,79 @@
+[
+  {
+    "id": 1,
+    "title": "12 V power",
+    "step": "Connect a +12 V power adapter to the JPWR 2.10 mm barrel jack.",
+    "look_for": "The barrel power jack marked JPWR and the Type-C to barrel plug adapter.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/set-up-the-device.md"
+  },
+  {
+    "id": 2,
+    "title": "Debug serial console",
+    "step": "Connect the debug UART micro-USB port to your host and open the second serial device, normally /dev/ttyUSB1, at 115200 baud.",
+    "look_for": "The debug UART micro-USB port; the host exposes four serial devices and the second is the Main Domain console.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/set-up-the-device.md"
+  },
+  {
+    "id": 3,
+    "title": "USB0 flashing",
+    "step": "Connect the USB0 Type-C port to the host computer for software flashing.",
+    "look_for": "The Type-C connector labeled USB0.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/set-up-the-device.md"
+  },
+  {
+    "id": 4,
+    "title": "USB1 host peripherals",
+    "step": "Use the USB1 Type-C host-mode port for a USB peripheral.",
+    "look_for": "The Type-C connector labeled USB1.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/device-overview.md"
+  },
+  {
+    "id": 5,
+    "title": "DisplayPort outputs",
+    "step": "Connect a monitor to DisplayPort0 (JEDP0) or JEDP1 using the supplied active Mini DisplayPort-to-DisplayPort cable.",
+    "look_for": "The mini-DisplayPort outputs identified as JEDP0 and JEDP1.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/set-up-the-device.md"
+  },
+  {
+    "id": 6,
+    "title": "Ethernet",
+    "step": "Connect an Ethernet cable to an RJ45 Ethernet connector.",
+    "look_for": "The RJ45 Ethernet connectors on the board.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/peripherals-interfaces/Ethernet.md"
+  },
+  {
+    "id": 7,
+    "title": "Camera DIP switches",
+    "step": "Check that SW1-5 through SW1-8 are OFF for CSI0 through CSI3 routed to the mainboard camera connectors.",
+    "look_for": "The SW1 DIP switch bank with positions 5 through 8; ON routes those cameras to the GMSL mezzanine.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/peripherals-interfaces/Camera.md"
+  },
+  {
+    "id": 8,
+    "title": "Speaker connections",
+    "step": "Connect the two supplied mini speakers to the onboard speaker connections driven by the MAX98357 I2S amplifiers.",
+    "look_for": "The two supplied mini speakers and their mainboard speaker connections.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/peripherals-interfaces/Audio.md"
+  },
+  {
+    "id": 9,
+    "title": "Onboard microphone",
+    "step": "Locate the single onboard MMICT5848 microphone on HS2_MI2S, configured to the left channel by default.",
+    "look_for": "The single onboard microphone shown in the Audio documentation's microphone-location image.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/peripherals-interfaces/Audio.md"
+  },
+  {
+    "id": 10,
+    "title": "Cooling fan",
+    "step": "Locate the bottom-mounted CPU cooler and its fan connection at JFAN on the mainboard.",
+    "look_for": "The fan-based cooler mounted to the bottom of the device and the JFAN connector.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/peripherals-interfaces/Fan.md"
+  },
+  {
+    "id": 11,
+    "title": "Wi-Fi hardware",
+    "step": "Locate the NFA765A Wi-Fi module in its M.2 slot and the ANT0 and ANT1 antenna connections.",
+    "look_for": "The M.2 Wi-Fi module and its two antenna connections.",
+    "source": "vendor/docs/iq9/pages/Ubuntu/devices/iq9075-evk/peripherals-interfaces/WiFi-BT.md"
+  }
+]

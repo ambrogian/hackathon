@@ -26,6 +26,7 @@
     "If in doubt, stop and call the shift lead or maintenance. The assistant gives guidance; it does not replace plant procedures."
   ],
   "triage_by_pattern": {
+    "no sheet in the roll stack: melt pouring off the die or rolls into the tray": ["melt_dumping_not_threaded"],
     "continuous straight lines along the sheet (machine direction), fixed position": ["die_lines", "roll_scratches_marks"],
     "regular evenly spaced lines across the width (transverse)": ["chatter_marks", "thickness_surging_md", "sticking_to_rolls"],
     "random spots or particles in the sheet": ["moisture_bubbles_splay", "black_specks", "gels_unmelts_contamination"],
