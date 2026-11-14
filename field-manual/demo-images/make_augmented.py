@@ -11,7 +11,7 @@ OUT = os.path.join(HERE, "augmented")
 os.makedirs(OUT, exist_ok=True)
 Q = 90
 SZ = (1280, 720)
-VIDEOS = [("good", "working_machine.mp4", 5.066), ("bad", "failure.mp4", 1.005), ("line", "demo/line.mp4", 10.027)]
+VIDEOS = [("good", "media/working_machine.mp4", 5.066), ("bad", "media/failure.mp4", 1.005), ("line", "demo/line.mp4", 10.027)]
 STILLS = {"good": "working_machine_50.jpg", "bad": "failure_50.jpg"}
 rng = np.random.default_rng(42)
 random.seed(42)

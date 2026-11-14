@@ -7,7 +7,6 @@ The video plays next to it as demo/line.mp4.
 Run: python3 demo/build_demo.py
 """
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -71,9 +70,6 @@ def main():
     payload = json.dumps({"line": D.CTX, "scenarios": data}, ensure_ascii=False)
     html = (DEMO / "template.html").read_text().replace("__DATA__", payload.replace("</", "<\\/"))
     (DEMO / "index.html").write_text(html)
-    video = ROOT / "gemini_generated_video_9117bf81.mp4"
-    if video.exists() and not (DEMO / "line.mp4").exists():
-        shutil.copy(video, DEMO / "line.mp4")
     print(f"wrote {DEMO / 'index.html'} ({len(html) // 1024} KB), video at demo/line.mp4")
 
 
