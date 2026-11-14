@@ -40,3 +40,20 @@ Standard library only; works with Wi-Fi off. On the board run:
 From the laptop: `ssh -N -L 8765:127.0.0.1:8765 iq9`, then open http://localhost:8765
 "Wi-Fi is off now" stamps the clock time in the page only; "edit" changes the label.
 It re-reads the log every second, so it can start before the first turn.
+
+## Inspection mode
+
+`inspect.py` compares the live camera (or `--image file`) with a "good" reference and says GOOD / BAD / UNSURE.
+The ZETIC d1 model gives P(same as reference) with the reference and current frame as two images
+(>0.8 GOOD, <0.2 BAD, otherwise UNSURE). On BAD/UNSURE, LFM3-Omni describes the difference in one
+sentence and gives an approximate bounding box (x is good, y can drift), drawn in red with ffmpeg.
+
+```
+python3 inspect.py ref good            # save current camera frame as refs/good.jpg
+python3 inspect.py ref bad             # optional example of a defect (refs/bad.jpg)
+python3 inspect.py ref good --image f.png
+echo "a blue circle on the left, white background" > refs/notes.txt   # optional: what "good" means
+python3 inspect.py check [--loop] [--image f] [--no-speak]
+```
+Each check writes runs/<id>/annotated.jpg, speaks the verdict, and appends to logs/field-manual.jsonl
+(`step` = verdict + sentence, `gate` = probabilities, plus `verdict`, `bbox`), so display.py shows it.
