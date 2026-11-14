@@ -18,6 +18,23 @@ Q_SAME = 'Is the second picture the same correct state as the first picture, wit
 Q_OK = 'Is everything in this picture correct, complete and undamaged?'
 
 
+def stage(**kw):
+    """Atomically publish the current demo stage for the dashboard (/api/stage)."""
+    kw['time'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    kw.setdefault('timings', {})
+    try:
+        (ROOT / 'live').mkdir(exist_ok=True)
+        tmp = ROOT / 'live/.stage.json.tmp'
+        tmp.write_text(json.dumps(kw))
+        os.replace(tmp, ROOT / 'live/stage.json')
+    except OSError as e:
+        print('stage write failed', e)
+
+
+def put_image(src, dest):
+    tmp = Path(str(dest) + '.tmp'); shutil.copyfile(src, tmp); os.replace(tmp, dest)
+
+
 def grab(args, dest):
     src = args.image or str(LIVE)
     if not os.path.exists(src):
@@ -122,10 +139,9 @@ def draw(frame, box, out):
     subprocess.run([FFMPEG, '-nostdin', '-loglevel', 'error', '-y', '-i', str(frame), '-vf', vf, '-frames:v', '1', '-q:v', '3', str(out)], check=True)
 
 
-def speak(text):
+def speak(text, wav):
     try:
         req = urllib.request.Request(BASE + '/v1/audio/speech', data=json.dumps({'model': 'tts', 'input': text, 'stream_format': 'audio', 'response_format': 'wav'}).encode(), headers={'Content-Type': 'application/json'})
-        wav = ROOT / 'runs/_speech.wav'
         with OPENER.open(req, timeout=150) as r:
             wav.write_bytes(r.read())
         subprocess.run(['pw-play', '--target', '55', str(wav)], timeout=45)
@@ -136,11 +152,12 @@ def speak(text):
 _d1 = None
 
 
-def check_once(args, ref_png_cache={}):
+def check_once(args, alarmed=False, first=False, ref_png_cache={}):
     global _d1
     t0 = time.monotonic(); T = {}
     rid = datetime.datetime.now().strftime('insp-%Y%m%d-%H%M%S')
     run = ROOT / 'runs' / rid; run.mkdir(parents=True, exist_ok=True)
+    rel = 'runs/' + rid
     good = ROOT / 'refs/good.jpg'
     if not good.exists():
         sys.exit('no reference: run  inspect.py ref good  first')
@@ -151,6 +168,11 @@ def check_once(args, ref_png_cache={}):
     frame = run / 'frame.jpg'
     grab(args, frame)
     T['capture_s'] = round(time.monotonic() - t0, 3); t = time.monotonic()
+    (ROOT / 'runs/_monitor').mkdir(exist_ok=True)
+    put_image(frame, ROOT / 'runs/_monitor/input.jpg')
+    if first:
+        stage(stage='input', verdict=None, p=None, frame='runs/_monitor/input.jpg', run=None)
+        time.sleep(3)
     if _d1 is None:
         _d1 = D1(); T['d1_load_s'] = round(time.monotonic() - t, 3); t = time.monotonic()
     key = str(good.stat().st_mtime)
@@ -166,7 +188,18 @@ def check_once(args, ref_png_cache={}):
     score = probs['same_as_ref']
     verdict = 'GOOD' if score > GOOD_T else 'BAD' if score < BAD_T else 'UNSURE'
     sent, box, raw, shown = '', None, '', frame
+    base = {'verdict': verdict, 'p': score, 'frame': rel + '/input.jpg', 'run': rid}
+    if args.loop and (verdict == 'GOOD' or alarmed):
+        shutil.rmtree(run, ignore_errors=True)
+        if verdict == 'GOOD':
+            stage(stage='monitoring', verdict=verdict, p=score, frame='runs/_monitor/input.jpg', run=None, timings={'d1_s': T['d1_s']})
+            if args.loop:
+                return verdict  # keep the log for anomalies only
+        else:
+            return verdict  # still alarmed: hold the last result, do not re-run Omni
+    put_image(frame, run / 'input.jpg')
     if verdict != 'GOOD':
+        stage(stage='inference', timings=dict(T), **base)
         t = time.monotonic()
         refs = [data_url(good, 'image/jpeg')] + ([data_url(bad, 'image/jpeg')] if bad.exists() else [])
         try:
@@ -174,6 +207,7 @@ def check_once(args, ref_png_cache={}):
         except Exception as e:
             sent, raw = 'explanation failed: %s' % e, ''
         T['omni_s'] = round(time.monotonic() - t, 3); t = time.monotonic()
+        base['annotated'] = None
         if box:
             shown = run / 'annotated.jpg'
             try:
@@ -181,14 +215,20 @@ def check_once(args, ref_png_cache={}):
             except Exception as e:
                 print('drawbox failed', e); shown = frame
             T['draw_s'] = round(time.monotonic() - t, 3)
+            base['annotated'] = rel + '/annotated.jpg'
+        stage(stage='box', box=box, timings=dict(T), **base)
+        time.sleep(1.0)
+        stage(stage='text', text=sent, box=box, timings=dict(T), **base)
     if not (run / 'annotated.jpg').exists():
         shutil.copyfile(frame, run / 'annotated.jpg')
     shown = run / 'annotated.jpg'
     step = verdict + (': ' + sent if sent else ': matches the reference')
     spoken = step
     if not args.no_speak:
-        t = time.monotonic(); speak(spoken); T['speak_s'] = round(time.monotonic() - t, 3)
+        t = time.monotonic(); speak(spoken, run / 'answer.wav'); T['speak_s'] = round(time.monotonic() - t, 3)
     T['total_s'] = round(time.monotonic() - t0, 3)
+    if True:
+        stage(stage='done', text=sent, box=box, timings=dict(T), audio=(rel + '/answer.wav') if (run / 'answer.wav').exists() else None, **base)
     rec = {'time': datetime.datetime.now(datetime.timezone.utc).isoformat(), 'transcript': '[inspection check]',
            'step': step, 'seen': (sent + ' (box approximate)') if box else sent, 'card': None, 'timings': T, 'model': 'd1-2b + LFM3-Omni-2B',
            'npu': True, 'gate': {'result': verdict.lower(), **probs, 'good_t': GOOD_T, 'bad_t': BAD_T},
@@ -209,8 +249,11 @@ def main():
     if a.c == 'ref':
         return cmd_ref(a)
     try:
+        alarmed, first = False, a.loop
         while True:
-            check_once(a)
+            v = check_once(a, alarmed, first)
+            first = False
+            alarmed = (v != 'GOOD') if a.loop else False
             if not a.loop:
                 break
             time.sleep(1)

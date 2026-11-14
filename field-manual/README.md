@@ -57,3 +57,20 @@ python3 inspect_mode.py check [--loop] [--image f] [--no-speak]
 ```
 Each check writes runs/<id>/annotated.jpg, speaks the verdict, and appends to logs/field-manual.jsonl
 (`step` = verdict + sentence, `gate` = probabilities, plus `verdict`, `bbox`), so display.py shows it.
+
+## Monitoring demo
+
+Stage view at http://localhost:8765/monitor (control image + live input, status line, box, LLM sentence,
+timings, Audio placeholder). Buttons on the page: **Monitor** (start/stop mock feed + loop), **Analyze**
+(one full pass on the current input), **Reset**. Or from the command line on the board
+(stop `camd.sh` first: both write `live/latest.jpg`; the Monitor button does this itself):
+
+```
+./camd.sh stop; ./mock_feed.sh 12            # good stills for 12 s, then failure stills (./mock_feed.sh stop)
+python3 inspect_mode.py check --loop --no-speak   # input -> monitoring -> inference -> box -> text -> done, then holds
+python3 display.py --root ~/ondev/field-manual --port 8765
+```
+Laptop: `ssh -N -L 8765:127.0.0.1:8765 iq9`, open http://localhost:8765/monitor.
+The loop publishes `live/stage.json` (atomic); the page polls `/api/stage` every 0.5 s. After a BAD result the
+loop holds it until a GOOD frame returns. The sentence is typed out in the page (not streamed from the model).
+Audio: `runs/<id>/answer.wav` is linked if `--no-speak` is omitted.

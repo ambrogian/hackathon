@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Judge-facing display for the Dead-Zone Field Manual. Standard library only, fully offline."""
-import argparse, json, mimetypes
+import argparse, json, mimetypes, os, signal, subprocess, sys, threading, time, datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -96,7 +96,112 @@ def safe_frame(name):
     return p if p.is_file() else None
 
 
+PROCS = {}
+LOCK = threading.Lock()
+ORIGINS = ('http://localhost:8765', 'http://127.0.0.1:8765')
+
+
+def running():
+    return [k for k, p in PROCS.items() if p.poll() is None]
+
+
+def spawn(name, argv):
+    PROCS[name] = subprocess.Popen(argv, cwd=ROOT, start_new_session=True, stdin=subprocess.DEVNULL,
+                                   stdout=open('/tmp/field-manual-%s.log' % name, 'w'), stderr=subprocess.STDOUT)
+
+
+def write_stage(d):
+    d['time'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    d.setdefault('timings', {})
+    (ROOT / 'live').mkdir(exist_ok=True)
+    tmp = ROOT / 'live/.stage.json.tmp'
+    tmp.write_text(json.dumps(d))
+    os.replace(tmp, ROOT / 'live/stage.json')
+
+
+def stop_all():
+    subprocess.run(['bash', str(ROOT / 'mock_feed.sh'), 'stop'], cwd=ROOT, timeout=10)
+    for k, p in list(PROCS.items()):
+        if p.poll() is None:
+            try:
+                os.killpg(p.pid, signal.SIGTERM)  # only groups this server started
+            except OSError:
+                pass
+
+
+def control(path, body):
+    with LOCK:
+        if path == '/api/monitor':
+            act = body.get('action')
+            if act == 'stop':
+                stop_all()
+                return 200, {'ok': True, 'running': []}
+            if act != 'start':
+                return 400, {'error': 'action must be start or stop'}
+            if running():
+                return 409, {'error': 'already running', 'running': running()}
+            subprocess.run(['bash', str(ROOT / 'camd.sh'), 'stop'], cwd=ROOT, timeout=10)
+            try:
+                os.remove(ROOT / 'live/stage.json')
+            except OSError:
+                pass
+            spawn('feed', ['bash', str(ROOT / 'mock_feed.sh'), '12'])
+            time.sleep(1.5)  # let the first frame land
+            spawn('loop', [sys.executable, str(ROOT / 'inspect_mode.py'), 'check', '--loop', '--no-speak'])
+            return 200, {'ok': True, 'running': running()}
+        if path == '/api/analyze':
+            if running():
+                return 409, {'error': 'already running', 'running': running()}
+            img = ROOT / 'runs/_monitor/input.jpg'
+            if not img.is_file():
+                img = ROOT / 'live/latest.jpg'
+            if not img.is_file():
+                return 400, {'error': 'no input image'}
+            spawn('analyze', [sys.executable, str(ROOT / 'inspect_mode.py'), 'check', '--no-speak', '--image', str(img)])
+            return 200, {'ok': True, 'running': running()}
+        if path == '/api/reset':
+            if running():
+                return 409, {'error': 'stop first', 'running': running()}
+            fr = 'runs/_monitor/input.jpg' if (ROOT / 'runs/_monitor/input.jpg').is_file() else None
+            write_stage({'stage': 'input', 'verdict': None, 'p': None, 'frame': fr, 'run': None})
+            return 200, {'ok': True}
+    return 404, {'error': 'not found'}
+
+
+def stage_api():
+    try:
+        d = json.loads((ROOT / 'live/stage.json').read_text())
+    except (OSError, ValueError):
+        d = {'stage': 'input', 'frame': None}
+    for k in ('frame', 'annotated', 'audio'):
+        if d.get(k):
+            d[k] = media_name(d[k])
+    d['running'] = running()
+    return d
+
+
 class Handler(BaseHTTPRequestHandler):
+    def host_ok(self):
+        host = (self.headers.get('Host') or '').rsplit(':', 1)[0]
+        return host in ('127.0.0.1', 'localhost')
+
+    def do_POST(self):
+        if not self.host_ok():
+            return self.send_error(421)
+        origin = self.headers.get('Origin')
+        if origin is not None and origin not in ORIGINS:
+            return self.send(403, b'{"error":"bad origin"}', 'application/json')
+        path = unquote(urlsplit(self.path).path)
+        try:
+            n = min(int(self.headers.get('Content-Length') or 0), 4096)
+            body = json.loads(self.rfile.read(n) or b'{}')
+            if not isinstance(body, dict):
+                body = {}
+        except ValueError:
+            body = {}
+        code, out = control(path, body)
+        self.send(code, json.dumps(out).encode(), 'application/json')
+
     def send(self, code, body, ctype, extra=()):
         self.send_response(code)
         self.send_header('Content-Type', ctype)
@@ -117,6 +222,24 @@ class Handler(BaseHTTPRequestHandler):
         path = unquote(urlsplit(self.path).path)
         if path in ('/', '/index.html'):
             self.send(200, PAGE.encode(), 'text/html; charset=utf-8')
+        elif path == '/monitor':
+            self.send(200, MONITOR.encode(), 'text/html; charset=utf-8')
+        elif path == '/api/stage':
+            self.send(200, json.dumps(stage_api()).encode(), 'application/json')
+        elif path.startswith('/ref/'):
+            refs = (ROOT / 'refs').resolve()
+            try:
+                p = (refs / path[5:]).resolve(); p.relative_to(refs)
+            except (ValueError, OSError):
+                p = None
+            if not p or not p.is_file() or p.suffix.lower() not in ('.jpg', '.jpeg', '.png'):
+                return self.send(404, b'not found', 'text/plain')
+            self.send(200, p.read_bytes(), mimetypes.guess_type(p.name)[0])
+        elif path.startswith('/audio/'):
+            p = safe_frame(path[7:])
+            if not p or p.suffix.lower() != '.wav':
+                return self.send(404, b'not found', 'text/plain')
+            self.send(200, p.read_bytes(), 'audio/wav')
         elif path == '/api/latest':
             self.send(200, json.dumps(latest()).encode(), 'application/json')
         elif path.startswith('/frame/'):
@@ -202,6 +325,65 @@ function render(d){
 }
 async function poll(){try{const r=await fetch('/api/latest',{cache:'no-store'});render(await r.json())}catch(e){}}
 poll();setInterval(poll,1000);
+</script></body></html>"""
+
+
+MONITOR = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Monitor</title><style>
+*{box-sizing:border-box}body{margin:0;background:#0b0f14;color:#eef3f8;font:24px/1.3 system-ui,sans-serif}
+header{display:flex;gap:14px;align-items:center;padding:12px 22px;background:#121a24}
+h1{font-size:30px;margin:0;flex:1}.badge{background:#0a7d3c;padding:8px 18px;border-radius:30px;font-weight:700}
+button{font:inherit;font-weight:700;padding:14px 30px;border-radius:12px;border:0;color:#fff;cursor:pointer}
+#bm{background:#1f6feb}#bm.on{background:#b3342d}#ba{background:#8957e5}#br{background:#33414f;font-size:18px;padding:8px 16px}
+button:disabled{opacity:.4}
+main{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:22px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}figure{margin:0}figcaption{font-size:22px;font-weight:700;margin-bottom:6px}
+#ref,#img{width:100%;aspect-ratio:4/3;max-height:50vh;object-fit:contain;background:#000;border-radius:12px;border:6px solid #223}
+#status{font-size:44px;font-weight:800;line-height:1.15}
+.good{color:#3ddc84}.bad{color:#ff5a4f}.warn{color:#ffc247}
+#text{font-size:44px;font-weight:700;margin-top:18px;min-height:2.5em}
+.pill{display:inline-block;margin:6px 8px 0 0;padding:6px 14px;background:#1a2634;border-radius:8px;font-size:26px}
+.box{margin-top:20px;padding:14px;border:2px dashed #456;border-radius:12px;color:#8fa3b8}
+#err{color:#ff8a80;font-size:18px}
+</style></head><body>
+<header><h1>Field Manual &middot; Monitor</h1><button id="bm">Monitor</button><button id="ba">Analyze</button><button id="br">Reset</button></header>
+<main><section><div class="pair"><figure><figcaption class="good">Control: GOOD reference</figcaption><img id="ref" src="/ref/good.jpg" alt="control"></figure>
+<figure><figcaption id="cap">Live input</figcaption><img id="img" alt="input" hidden></figure></div><div id="err"></div></section>
+<section><div id="status">Waiting&hellip;</div><div id="text"></div><div id="tm"></div>
+<div class="badge" style="display:inline-block;margin-top:18px">on-device &middot; NPU &middot; Wi-Fi independent</div>
+<div class="box">Audio &nbsp;<button id="play" disabled style="padding:6px 18px">&#9654; play</button> <span id="anote">(coming later)</span></div></section></main>
+<script>
+const $=id=>document.getElementById(id);let S={},shown='',typed=0,tkey='',au=null;
+async function post(p,b){try{const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});const j=await r.json();$('err').textContent=r.ok?'':(j.error||r.status);poll()}catch(e){$('err').textContent=String(e)}}
+$('bm').onclick=()=>post('/api/monitor',{action:(S.running||[]).length?'stop':'start'});
+$('ba').onclick=()=>post('/api/analyze');$('br').onclick=()=>post('/api/reset');
+$('play').onclick=()=>{if(S.audio){new Audio('/audio/'+S.audio.split('/').map(encodeURIComponent).join('/')).play()}};
+const url=n=>'/frame/'+n.split('/').map(encodeURIComponent).join('/')+'?'+encodeURIComponent(S.time||'');
+function render(){
+ const st=S.stage,run=(S.running||[]).length>0,p=typeof S.p==='number'?S.p.toFixed(2):'';
+ $('bm').textContent=run?'Stop':'Monitor';$('bm').className=run?'on':'';$('bm').disabled=false;$('ba').disabled=run;$('br').disabled=run;
+ const T=S.timings||{};let h='',c='';
+ if(st==='input'){h='Input image';c=''}
+ else if(st==='monitoring'){h='Monitoring line… GOOD '+p+' (d1, NPU'+(T.d1_s?', '+T.d1_s.toFixed(2)+' s':'')+')';c='good'}
+ else if(st==='inference'){h='Anomaly: running inference…  '+(S.verdict||'')+' '+p;c='warn'}
+ else{h=(S.verdict||'')+' '+p;c=S.verdict==='GOOD'?'good':'bad'}
+ $('status').textContent=h;$('status').className=c;
+ const isbad=(st==='inference'||st==='box'||st==='text'||st==='done')&&S.verdict&&S.verdict!=='GOOD';
+ $('cap').textContent=isbad?((st!=='inference'&&S.annotated?'Anomaly (box): ':'Live input: ')+S.verdict):'Live input: GOOD (normal operation)';
+ $('cap').className=isbad?'bad':'good';
+ const f=(st==='box'||st==='text'||st==='done')&&S.annotated?S.annotated:S.frame;
+ if(f){const u=url(f);if(u!==shown){shown=u;$('img').src=u}$('img').hidden=false}
+ const txt=(st==='text'||st==='done')?(S.text||''):'';
+ if(txt){const k=S.run+txt;if(k!==tkey){tkey=k;typed=0}}else{tkey='';typed=0}
+ $('text').textContent=txt.slice(0,typed);
+ const tm=$('tm');tm.textContent='';
+ if(st==='done'||st==='text'){for(const [k,n,u] of [['d1_s','d1',1000],['omni_s','Omni',1],['draw_s','draw',1000]]){if(typeof T[k]==='number'){const s=document.createElement('span');s.className='pill';s.textContent=n+' '+(u===1000?Math.round(T[k]*1000)+' ms':T[k].toFixed(1)+' s');tm.appendChild(s)}}}
+ $('play').disabled=!S.audio;$('anote').textContent=S.audio?'':'(coming later)';
+}
+setInterval(()=>{const t=(S.stage==='text'||S.stage==='done')?(S.text||''):'';if(typed<t.length){typed+=2;$('text').textContent=t.slice(0,typed)}},40);
+async function poll(){try{S=await (await fetch('/api/stage',{cache:'no-store'})).json();render()}catch(e){}}
+poll();setInterval(poll,500);
 </script></body></html>"""
 
 
