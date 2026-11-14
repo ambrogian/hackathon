@@ -99,7 +99,8 @@ def run_tool(plant, name, raw_args):
             return {"error": r["error"]}, False
         return {"asset": args["asset"], "name": plantmod.ASSETS[args["asset"]]["name"], "p_fault": r["p_fault"], "severity": r["severity"], "category": r["category"],
                 "category_confidence": r.get("category_confidence"), "severity_probs": r.get("severity_probs"), "category_probs": r.get("category_probs"),
-                "p_hotspot_image": r["p_hotspot_image"], "ms_state": r["ms"]["state"], "ms_image": r["ms"]["image"]}, True
+                "p_hotspot_image": r["p_hotspot_image"], "p_fault_image": (r.get("vision") or {}).get("p_fault"), "p_fault_fused": (r.get("fused") or {}).get("p_fault"),
+                "severity_fused": (r.get("fused") or {}).get("severity"), "ms_state": r["ms"]["state"], "ms_image": r["ms"]["image"]}, True
     return plant.request_order(args["asset"], args["reason"], args["severity"])  # write: policy inside
 
 
@@ -187,10 +188,14 @@ def render(steps):
             elif r.get("dt_c") is not None and r["label"] != "OK":
                 out.append(f"  {r.get('worst', 'Hottest point')} is {r['dt_c']:.1f} °C above the others" + (", crackle detected" if r.get("impulsive") else ", steady hiss detected" if r.get("acoustic") else ""))
         elif s["tool"] == "d1_assess":
-            out.append((f"  d1 second opinion, {r.get('name', 'asset')}: fault {r['p_fault']:.2f} · severity {r['severity']} · category {r['category']}"
-                        + (f" ({r['category_confidence']:.2f})" if r.get("category_confidence") is not None else "")
-                        + (f" · hotspot in picture {r['p_hotspot_image']:.2f}" if r.get("p_hotspot_image") is not None else "")) if s["ok"]
-                       else "  d1 not available: " + r["error"])
+            if s["ok"] and r.get("p_fault_fused") is not None:
+                out.append(f"  d1 second opinion, {r.get('name', 'asset')}: image + text fault {r['p_fault_fused']:.2f} · severity {r['severity_fused']}"
+                           f" | image only {r['p_fault_image']:.2f} | text only {r['p_fault']:.2f} · {r['category']}"
+                           + (f" ({r['category_confidence']:.2f})" if r.get("category_confidence") is not None else ""))
+            elif s["ok"]:
+                out.append(f"  d1 second opinion, {r.get('name', 'asset')}: fault {r['p_fault']:.2f} · severity {r['severity']} · category {r['category']}")
+            else:
+                out.append("  d1 not available: " + r["error"])
         elif s["tool"] == "open_work_order":
             out.append("  Work order: opened." if s["ok"] else "  Work order: not opened - " + r["error"].replace("refused by policy: ", ""))
         elif not s["ok"]:

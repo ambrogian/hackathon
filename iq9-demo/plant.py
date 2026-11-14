@@ -204,7 +204,10 @@ class Plant:
             if self.d1 and not st.get("d1_done"):
                 st["d1_done"] = True
                 body = "\n".join(f"{k}: {v}" for k, v in rec["measure"]["signals"].items())
-                self.d1.submit((asset, self.seq + 1), {"text": f"PC sheet extrusion line, {extrusion.LINE[asset]['zone']}\n{extrusion.NORMAL[asset]}\n{body}\nrule evidence: {headline}"},
+                hist = [r["measure"]["signals"] for r in self.buf if r["asset"] == asset][-40:] + [rec["measure"]["signals"]]
+                hist = [{**h, "d5_a5": h.get("d5_a", 0) * 5} for h in hist]
+                self.d1.submit((asset, self.seq + 1), {"text": f"PC sheet extrusion line, {extrusion.LINE[asset]['zone']}\n{extrusion.NORMAL[asset]}\n{body}\nrule evidence: {headline}",
+                                                       "history": hist, "panels": extrusion.PANELS[asset]},
                                lambda key, res, a=asset: self._d1_done(a, key, res))
         rec["ms"] = {"observe": round((t1 - t0) * 1e3, 1), "decide": round((time.perf_counter() - t1) * 1e3, 1), "act": 0.0, "explain": 0.0}
         rec["ms_total"] = round((time.perf_counter() - t0) * 1e3, 1)
@@ -279,7 +282,9 @@ class Plant:
             if ASSETS[asset]["kind"] == "line":
                 m = (st["last"] or {}).get("measure") or {}
                 scene = {"text": f"PC sheet extrusion line, {extrusion.LINE[asset]['zone']}\n{extrusion.NORMAL[asset]}\n" + "\n".join(f"{k}: {v}" for k, v in (m.get("signals") or {}).items())
-                         + f"\nrule evidence: {m.get('headline') or 'none'}"}
+                         + f"\nrule evidence: {m.get('headline') or 'none'}",
+                         "history": [{**r["measure"]["signals"], "d5_a5": r["measure"]["signals"].get("d5_a", 0) * 5} for r in self.buf if r["asset"] == asset][-40:],
+                         "panels": extrusion.PANELS[asset]}
             else:
                 scene = st["scene"] or scene_for(asset, st["mode"], 0)
         res = self.d1.assess(scene)

@@ -23,5 +23,8 @@ ok = [r for r in rows if "error" not in r]
 for lab in ("OK", "FAULT", "INCONCLUSIVE"):
     g = [r for r in ok if r["truth"] == lab]
     if g:
-        print(lab, len(g), "p_fault mean %.2f" % (sum(r["p_fault"] for r in g) / len(g)), "p_hotspot_image mean %.2f" % (sum(r["p_hotspot_image"] for r in g) / len(g)),
-              "ms state/image median", sorted(r["ms"]["state"] for r in g)[len(g) // 2], sorted(r["ms"]["image"] for r in g)[len(g) // 2])
+        m = lambda f: sum(f(r) for r in g) / len(g)  # noqa: E731
+        print(lab, len(g), "p_fault text %.2f vision %.2f fused %.2f" % (m(lambda r: r["p_fault"]), m(lambda r: r["vision"]["p_fault"]), m(lambda r: r["fused"]["p_fault"])),
+              "severity-level text %.2f vision %.2f fused %.2f" % (m(lambda r: r["severity_level"]), m(lambda r: r["vision"]["severity_level"]), m(lambda r: r["fused"]["severity_level"])),
+              "p_hotspot %.2f" % m(lambda r: r["p_hotspot_image"]),
+              "ms state/image median", sorted(r["ms"]["state"] for r in g)[len(g) // 2], sorted(r["ms"]["image"] for r in g)[len(g) // 2], "fused", sorted(r["ms"]["fused"] for r in g)[len(g) // 2])

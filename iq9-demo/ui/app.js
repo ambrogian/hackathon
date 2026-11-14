@@ -65,14 +65,17 @@ function paintD1(id, d1) {
   const c = $("d1card"); c.hidden = false; c.dataset.key = id + ":" + (d1 && d1.ts); c.replaceChildren(el("h2", {}, "d1-2B second opinion", el("span", { className: "m", textContent: "CPU · no output tokens" })));
   if (d1 && !d1.error) {
     const pct = (x) => (x * 100).toFixed(0) + " %";
-    c.append(el("dl", {}, ...[["Fault probability", pct(d1.p_fault)], ["Severity", d1.severity], ["Category", `${d1.category} (${pct(d1.category_confidence)})`],
-      ...(d1.p_hotspot_image != null ? [["Hotspot in the picture", pct(d1.p_hotspot_image)]] : []), ["Latency", `${d1.ms.state} ms state · ${d1.ms.image} ms image`], ["Output tokens", d1.output_tokens]]
+    c.append(el("dl", {}, ...[...(d1.vision ? [["Fault, image + text", pct(d1.fused.p_fault)], ["Fault, image only", pct(d1.vision.p_fault)]] : []), ["Fault, text only", pct(d1.p_fault)],
+      ...(d1.vision ? [["Severity, image + text", d1.fused.severity], ["Severity, image only", d1.vision.severity]] : []), ["Severity, text only", d1.severity],
+      ["Category", `${d1.category} (${pct(d1.category_confidence)})`],
+      ...(d1.p_hotspot_image != null ? [["Hotspot in the picture", pct(d1.p_hotspot_image)]] : []), ["Latency", `${d1.ms.state} ms text` + (d1.vision ? ` · ${d1.ms.image} ms image · ${d1.ms.fused || 0} ms fused` : "")], ["Output tokens", d1.output_tokens]]
       .flatMap(([k, v]) => [el("dt", { textContent: k }), el("dd", { textContent: String(v) })])));
     const bars = (title, probs, names) => {
       const entries = Array.isArray(probs) ? probs.map((v, i) => [names ? names[i] : String(i), v]) : Object.entries(probs || {});
       c.append(el("small", { textContent: title }), ...entries.map(([k, v]) => el("div", { className: "pbar" }, el("span", { textContent: k }), el("i", { style: `width:${(v * 100).toFixed(0)}%` }), el("em", { textContent: pct(v) }))));
     };
-    if (d1.severity_probs) bars("Severity probabilities", d1.severity_probs, ["Low", "Moderate", "Critical"]);
+    if (d1.fused && d1.fused.severity_probs) bars("Severity probabilities (image + text)", d1.fused.severity_probs, ["Low", "Moderate", "Critical"]);
+    if (d1.severity_probs) bars("Severity probabilities (text)", d1.severity_probs, ["Low", "Moderate", "Critical"]);
     if (d1.category_probs) bars("Category probabilities", d1.category_probs);
   } else c.append(el("small", { textContent: d1 ? d1.error : "Runs automatically when this asset first leaves OK, or press the button." }));
   c.append(el("button", { type: "button", textContent: "Run d1 on this frame", onclick: async (e) => {

@@ -1,0 +1,1 @@
+Downloaded at main 652f920e544ea37f81e4b0ce89b81d4ed0da90b1 (2026-11-03). Compared by git/LFS blob id against the hackathon pin 10e7671d44e4: 42 files each, only README.md differs; weights and model code identical. Checked 2026-11-13 19:2x PST.

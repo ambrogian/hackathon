@@ -1,6 +1,6 @@
 # IQ-9075 inspection demo (self-contained)
 
-Offline inspection console for the Dragonwing IQ-9075: a plant with switchgear, a compressor, an edge board and a PC sheet extrusion line (Z1 dryer, Z3 screen pack, Z6 die, Z7 roll stack). Observe, decide (rule gate, d1-2B second opinion with probabilities), act (allowlist), explain (LFM3, only when needed), log (flushed JSONL). Signals are simulated; the edge board asset reads the host's real SoC thermal zones when they exist.
+Offline inspection console for the Dragonwing IQ-9075, anchored on this repo's PC sheet extrusion line: Z1 dryer regeneration heater, Z3 screen pack, Z6 die-zone D5 heater circuit, Z7 roll 2 drive coupling (the four scenarios in `scenarios/`). It also monitors switchgear, a compressor and the edge board. Observe, decide (rule gate, d1-2B second opinion with text, image and fused fault / severity probabilities), act (allowlist), explain (LFM3, only when needed), log (flushed JSONL). Signals are simulated; the edge board asset reads the host's real SoC thermal zones when they exist.
 
 Everything is new files in this folder. It does not import anything from the rest of the repo, so it plugs in by copying or running from here.
 
@@ -17,7 +17,7 @@ Open http://127.0.0.1:8088. Views: architecture (clickable building), asset cons
 
 ## Needs
 - Python 3 and numpy for the base demo.
-- d1 (optional): torch, torchvision, pillow, numpy and `transformers==5.19.0` (5.23.0 fails to load d1) in a venv, plus the local d1-2B snapshot at `~/models/d1-2B` (the weights are not in this folder). See `D1_NOTES.md`.
+- d1 (optional): torch, torchvision, pillow, numpy and `transformers==5.19.0` (5.23.0 fails to load d1) in a venv, plus the d1-2B weights (3.57 GiB, not in git): put `model.safetensors` into `models/d1-2B/` (code and license are there) or keep a snapshot at `~/models/d1-2B`. See `D1_NOTES.md`.
 - LLM (optional): any OpenAI-compatible server on loopback; GenieX on the board (`LiquidAI/LFM3-1.7B-GGUF:Q4_0`), llama.cpp works on a laptop (`llama-server --jinja`).
 
 ## Layout

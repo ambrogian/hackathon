@@ -12,7 +12,7 @@ import plant  # noqa: E402
 from validate import make_decider  # noqa: E402
 
 RES = {"p_fault": 0.9, "severity_level": 2.0, "severity": "Critical", "category": "thermal", "category_confidence": 0.8,
-       "p_hotspot_image": 0.7, "ms": {"state": 10, "image": 9}, "output_tokens": 0, "input_tokens": {"state": 1, "image": 1}}
+       "p_hotspot_image": 0.7, "vision": {"p_fault": 0.5, "severity": "Moderate", "severity_probs": [0.2, 0.5, 0.3]}, "fused": {"p_fault": 0.8, "severity": "Critical", "severity_probs": [0.1, 0.2, 0.7]}, "ms": {"state": 10, "image": 9}, "output_tokens": 0, "input_tokens": {"state": 1, "image": 1}}
 
 
 class Fake:
@@ -50,7 +50,8 @@ class D1(unittest.TestCase):
             self.assertEqual(res["p_fault"], 0.9)
             self.assertFalse(ask.run_tool(p, "d1_assess", '{"asset":"edge"}')[1])  # board has no frame
             r = ask.ask(p, "Confirm SG-2 with d1")
-            self.assertIn("d1 second opinion, SG-2: fault 0.90", r["answer"])
+            self.assertIn("d1 second opinion, SG-2: image + text fault 0.80", r["answer"])
+            self.assertIn("image + text fault 0.80 · severity Critical | image only 0.50 | text only 0.90", r["answer"])
 
     def test_without_d1_everything_still_works(self):
         with tempfile.TemporaryDirectory() as d:
