@@ -118,7 +118,7 @@ def beep(path, hz):
 def record_vad(clip, max_s=8.0, wait_s=5.0, tail_s=0.8, loop=False):
     """Stream raw PCM from pw-record, endpoint on per-20 ms RMS. Returns info dict."""
     frame_bytes = 640  # 20 ms of 16 kHz s16 mono
-    beep(Path('/tmp/fm_beep_hi.wav'), 880)
+    beep(ROOT / 'live' / 'beep_hi.wav', 880)
     print('Listening…', flush=True)
     proc = subprocess.Popen(['pw-record', '--target', '56', '--rate', '16000', '--channels', '1',
         '--format', 's16', '-'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
@@ -183,7 +183,7 @@ def record_vad(clip, max_s=8.0, wait_s=5.0, tail_s=0.8, loop=False):
             proc.wait(timeout=2)
         except subprocess.TimeoutExpired:
             proc.terminate(); proc.wait(timeout=2)
-    beep(Path('/tmp/fm_beep_lo.wav'), 440)
+    beep(ROOT / 'live' / 'beep_lo.wav', 440)
     with wave.open(str(clip), 'wb') as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
         w.writeframes(b''.join(voiced if speaking else pre))
