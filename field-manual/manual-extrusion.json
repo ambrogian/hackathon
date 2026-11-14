@@ -110,5 +110,12 @@
   "step": "UV layer missing or uneven. Check Z5 UV co-extruder and feedblock: Check the co-extruder is running and its hopper has material.",
   "look_for": "Not visible in a normal photo. Under a UV lamp the protected surface looks different; gaps show as bright or dark areas.",
   "source": "kb/defects.json#uv_layer_defects"
+ },
+ {
+  "id": 217,
+  "title": "Melt dumping / sheet not threaded into roll stack",
+  "step": "Melt dumping / sheet not threaded into roll stack. Check Z6 Flat sheet die and Z7 Polishing roll stack (3-roll calender): Keep hands and tools completely clear of the roll stack nip (Z7) and die lips (Z6). Never reach into a running nip or touch the hot die (around 300 \u00b0C) to guide molten plastic.",
+  "look_for": "The melt curtain leaving the flat sheet die (Z6) is not entering the first nip of the polishing roll stack (Z7), or the sheet has broken at the rolls. Molten polycarbonate is pouring or piling off the die lips or rolls into the catch tray below.",
+  "source": "kb/defects.json#melt_dumping_not_threaded"
  }
 ]
