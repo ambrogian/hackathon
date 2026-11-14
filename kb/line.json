@@ -1,0 +1,40 @@
+{
+  "line": "Polycarbonate (PC) solid sheet extrusion line",
+  "note": "Generic line layout. Zone IDs are referenced by every defect in defects.json. Replace typical values with your line's actual setpoints before using this on a real line.",
+  "diagram": "images/candidates/km_sheetline_labeled-04.png + -05.png (KraussMaffei sheet line, labeled; PC lines add the dryer, gear pump and UV co-extruder)",
+  "flow": ["Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "Z10", "Z11", "Z12"],
+  "zones": {
+    "Z1":  {"name": "Resin drying and feeding", "parts": ["dehumidifying dryer", "drying hopper", "gravimetric dosing / blender", "regrind feed"], "typical": "PC dried at about 120 °C for at least 4 h, dew point -40 °C or lower, target moisture below 0.02 %"},
+    "Z2":  {"name": "Main extruder", "parts": ["feed throat", "barrel heating/cooling zones", "screw", "vacuum vent (degassing port) and vacuum pump", "thermocouples"], "typical": "Melt temperature roughly 270-310 °C depending on grade"},
+    "Z3":  {"name": "Melt filtration", "parts": ["screen changer", "screen pack", "pressure transducers before/after screen"], "typical": "Watch the pressure difference across the screen; rising difference means the screen is loading up"},
+    "Z4":  {"name": "Gear pump (melt pump)", "parts": ["gear pump", "inlet pressure control loop", "outlet pressure transducer"], "typical": "Stable inlet pressure means stable output"},
+    "Z5":  {"name": "UV co-extruder and feedblock", "parts": ["co-extruder", "co-extruder hopper / dosing", "feedblock"], "typical": "Thin UV-protective cap layer on one or both surfaces"},
+    "Z6":  {"name": "Flat sheet die", "parts": ["die body heating zones", "flexible lip and lip adjustment bolts", "choker bar", "die lips"], "typical": "Lip gap set slightly above final thickness; die zones balanced across width"},
+    "Z7":  {"name": "Polishing roll stack (3-roll calender)", "parts": ["roll 1/2/3", "temperature control units (TCUs) per roll", "nip gap and gap parallelism", "roll drives, gearboxes, bearings", "melt bank in the first nip"], "typical": "Roll temperatures roughly 100-140 °C (below PC glass transition, about 147 °C)"},
+    "Z8":  {"name": "Cooling conveyor (roller table)", "parts": ["idler rollers", "ambient cooling / fans"], "typical": "Sheet must cool evenly top and bottom"},
+    "Z9":  {"name": "Edge trim", "parts": ["edge-trim knives", "edge-trim chopper / granulator"], "typical": "PC is notch-sensitive; trim while the sheet is still warm enough"},
+    "Z10": {"name": "Protective film laminator", "parts": ["film unwinds (top/bottom)", "film tension control", "laminating nip rolls"], "typical": "Even tension and nip pressure across width"},
+    "Z11": {"name": "Haul-off (pull rolls)", "parts": ["rubber-covered pull rolls", "haul-off drive", "speed ratio to roll stack"], "typical": "Small, stable speed ratio relative to the roll stack"},
+    "Z12": {"name": "Cross-cut saw and stacker", "parts": ["cross-cut saw or guillotine", "blade", "stacker"], "typical": "Sharp blade, correct feed rate, sheet not too cold at cutting"}
+  },
+  "safety": [
+    "Barrel, adapter and die run at about 300 °C and molten PC causes severe burns: heat-resistant gloves, sleeves and face shield for any work at Z2-Z6.",
+    "Never reach into the roll stack nip (Z7), the laminator nip (Z10) or the haul-off (Z11) while running. These are crushing and draw-in points.",
+    "Die lip cleaning while running only with brass tools, only if your plant procedure allows it, and only by trained operators. Never use steel tools on die lips or polishing rolls.",
+    "Screen changes and any opening of the melt path follow the plant procedure: melt under pressure can spray.",
+    "Saw (Z12) and edge-trim knives (Z9): lockout/tagout before touching blades.",
+    "If in doubt, stop and call the shift lead or maintenance. The assistant gives guidance; it does not replace plant procedures."
+  ],
+  "triage_by_pattern": {
+    "continuous straight lines along the sheet (machine direction), fixed position": ["die_lines", "roll_scratches_marks"],
+    "regular evenly spaced lines across the width (transverse)": ["chatter_marks", "thickness_surging_md", "sticking_to_rolls"],
+    "random spots or particles in the sheet": ["moisture_bubbles_splay", "black_specks", "gels_unmelts_contamination"],
+    "whole-surface color or appearance change": ["yellowing_degradation", "dull_surface_orange_peel"],
+    "wavy, V-shaped or irregular moving marks": ["flow_lines_bank_marks"],
+    "sheet not flat": ["warp_bow_stress"],
+    "thickness or optics differ across the width": ["thickness_variation_cd"],
+    "damage at edges or at cut": ["edge_and_cut_cracks"],
+    "problems with the masking film": ["protective_film_defects"],
+    "not visible in a normal photo": ["uv_layer_defects"]
+  }
+}

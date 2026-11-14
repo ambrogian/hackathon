@@ -1,0 +1,179 @@
+{
+  "note": "Four machine-failure examples for the PC sheet line in kb/line.json. Each one has simulated line telemetry (scenarios/telemetry/*.csv, made by simulate.py), a detection rule in diagnose.py, links into the knowledge base (zone, part, defect ids), and a repair-and-restart playbook. Tag names, geometry and numbers are illustrative: replace them with your line's real values before using this on a real line.",
+  "line_context": {
+    "product": "PC solid sheet, 4.0 mm x 2050 mm",
+    "line_speed_m_min": 2.0,
+    "output_kg_h": 1180,
+    "die_zones": 7,
+    "die_zone_width_mm": 293,
+    "rotating_elements_mm_diameter": {
+      "roll 1 (Z7)": 400,
+      "roll 2 (Z7)": 450,
+      "roll 3 (Z7)": 400,
+      "laminating nip roll (Z10)": 200,
+      "pull roll (Z11)": 250
+    },
+    "transport_delays_s": {
+      "screen changer to inspection camera": 75,
+      "roll 2 to inspection camera": 45
+    }
+  },
+  "scenarios": [
+    {
+      "id": "F1",
+      "failure_mode": "dryer_regen_heater_failure",
+      "title": "Dryer regeneration heater failed: resin will arrive wet",
+      "zone": "Z1",
+      "kb_part": "dehumidifying dryer",
+      "failing_part": "Dehumidifying dryer, regeneration heater circuit (heater element, its fuse or contactor)",
+      "telemetry": "telemetry/F1_dryer.csv",
+      "story": "Night shift. The regeneration heater in the dryer stops drawing current. Process air is still at 120 °C, so the dryer panel looks normal, but the desiccant is no longer being regenerated. Dew point starts to climb. The hopper holds about 4 h of material, so the sheet still looks perfect: bubbles would only show up about 2.5 h later, by which time the whole hopper is wet.",
+      "signals": {
+        "dryer_regen_heater_A": "Regeneration heater current. Normal about 18 A while regenerating",
+        "dryer_regen_temp_C": "Regeneration air temperature. Normal about 185 °C",
+        "dryer_process_air_C": "Drying air into the hopper. Setpoint 120 °C",
+        "dryer_dewpoint_C": "Drying air dew point. Must be -40 °C or lower",
+        "vent_vacuum_mbar_abs": "Extruder vent vacuum, absolute. Normal about 20 mbar",
+        "vision_bubbles_per_m2": "Inline camera: bubbles/splay count"
+      },
+      "how_ai_detects": "Regeneration heater current drops to zero while the dryer is in its regeneration cycle and regeneration air temperature falls. Process air temperature stays at setpoint, which rules out the process heater. Rising dew point confirms the desiccant is saturating.",
+      "ruled_out": [
+        "Process air heater: process air stays at 120 °C",
+        "Air leak or clogged filter: those raise dew point while regeneration temperature stays normal",
+        "Vacuum vent: vent vacuum is fine when the alert fires (it only worsens later, from the wet resin)"
+      ],
+      "expected_defects": ["moisture_bubbles_splay"],
+      "repair": {
+        "do_now": [
+          "Switch drying to the standby dryer or standby desiccant bed if the line has one.",
+          "If there is no standby: reduce line output to stretch drying time, and stop adding regrind.",
+          "Maintenance: check the regeneration heater fuse and contactor first (minutes). If they are OK, measure the heater element resistance: an open circuit means the element is burnt out.",
+          "Replace the failed fuse, contactor or element. Restart regeneration and watch the dew point."
+        ],
+        "spares": ["regeneration heater element", "heater fuse set", "heater contactor"],
+        "estimated_repair_min": 45,
+        "resume_when": [
+          "Regeneration heater current back at about 18 A and regeneration air back at about 185 °C",
+          "Dew point back at -40 °C or lower",
+          "Resin moisture below 0.02 % (if you can measure it)"
+        ],
+        "quality_containment": "If the alert was acted on before the dew point passed -35 °C, no sheet is affected. Otherwise hold all sheet from the first bubble alert until the camera is clean again."
+      }
+    },
+    {
+      "id": "F2",
+      "failure_mode": "screen_pack_rupture",
+      "title": "Screen pack torn: unfiltered melt going to the die",
+      "zone": "Z3",
+      "kb_part": "screen pack",
+      "failing_part": "Screen pack in the active screen changer cavity (torn or blown through)",
+      "telemetry": "telemetry/F2_screen.csv",
+      "story": "The screen has been loading up slowly all shift (pressure difference creeping up). Suddenly the pressure before the screen falls by 60 bar in a few seconds while the extruder screw speed does not change. The screen mesh has torn. About 75 s later gels and specks start reaching the camera.",
+      "signals": {
+        "screw_rpm": "Main extruder screw speed",
+        "melt_p1_bar": "Melt pressure before the screen",
+        "melt_p2_bar": "Melt pressure after the screen (gear pump inlet, held by the control loop)",
+        "gearpump_rpm": "Gear pump speed",
+        "vision_gels_per_m2": "Inline camera: gels, unmelts and specks count"
+      },
+      "how_ai_detects": "Pressure difference across the screen (P1 minus P2) falls by more than 35 % within 30 s while screw speed and gear pump speed are steady. A blocked feed or empty hopper would change screw speed or P2 too; only a torn screen makes the screen resistance collapse on its own.",
+      "ruled_out": [
+        "Hopper empty or feed bridging: screw speed and P2 stay steady",
+        "Pressure transducer fault: P1 and P2 both move consistently and the camera confirms contamination",
+        "Normal screen change: no screen-change command from the PLC at that time"
+      ],
+      "expected_defects": ["gels_unmelts_contamination", "black_specks"],
+      "repair": {
+        "do_now": [
+          "Index the screen changer to the fresh screen now, following the plant screen-change procedure (melt under pressure can spray). On a continuous screen changer the line keeps running.",
+          "Check the pressure difference settles at the clean-screen value.",
+          "Inspect the removed screen pack for the tear. If screens keep tearing, check the breaker plate and that the screen pack layers are in the right order."
+        ],
+        "spares": ["screen pack (correct mesh sequence)", "breaker plate seal"],
+        "estimated_repair_min": 5,
+        "resume_when": [
+          "Pressure difference back at the clean-screen value and steady",
+          "Camera gel count back at baseline for at least 2 sheet lengths"
+        ],
+        "quality_containment": "Hold sheet from the alert time until the gel count is back at baseline. Contaminated melt takes about 75 s to travel from the screen to the camera."
+      }
+    },
+    {
+      "id": "F3",
+      "failure_mode": "die_heater_open_circuit",
+      "title": "Die heating zone D5 lost its heater: thin lane forming across the sheet",
+      "zone": "Z6",
+      "kb_part": "die body heating zones",
+      "failing_part": "Die heating zone D5 heater circuit (heater cartridge, fuse or solid-state relay)",
+      "telemetry": "telemetry/F3_die.csv",
+      "story": "One of the seven die heating zones stops heating. The temperature controller sees the zone cooling and drives its output to 100 %, but no current flows. The neighbouring zones partly hold it up, so the temperature falls slowly. Colder melt in that lane is stiffer, flows less, and the sheet gets thinner over a 290 mm wide band. An operator would usually only notice when the thickness gauge goes out of tolerance.",
+      "signals": {
+        "die_D1..D7_temp_C": "Die zone temperatures. Setpoint 290 °C",
+        "die_D1..D7_out_pct": "Controller output per zone",
+        "die_D1..D7_amp": "Heater current per zone (current transformer). About 9 A at 100 % output",
+        "thickness_lane1..7_mm": "Thickness gauge, averaged over each die zone lane. Target 4.00 mm"
+      },
+      "how_ai_detects": "A die zone's controller output is at or near 100 % but its heater current is near zero for 30 s: the heater circuit is open. The zone temperature then drifts below setpoint and the matching thickness lane goes thin, which confirms it and pins down the location across the width.",
+      "ruled_out": [
+        "Lip bolt or flexible lip problem: those change thickness without any zone temperature or current change",
+        "Thermocouple fault: the heater current is zero, so the heater really is off",
+        "Whole-die temperature problem: only one zone is affected"
+      ],
+      "expected_defects": ["thickness_variation_cd"],
+      "repair": {
+        "do_now": [
+          "Temporary: raise the setpoints of the two neighbouring zones (D4, D6) a few degrees and correct the lip bolts at that lane to hold thickness while the repair is prepared.",
+          "Maintenance: check the D5 fuse and solid-state relay in the cabinet first (minutes, no work at the die).",
+          "If fuse and relay are OK, the heater cartridge is open. Replace it following the plant procedure for hot die work: heat-resistant gloves, sleeves and face shield.",
+          "Put D4 and D6 back to their normal setpoints once D5 is heating again."
+        ],
+        "spares": ["die heater cartridge (zone size)", "heater fuse set", "solid-state relay"],
+        "estimated_repair_min": 20,
+        "resume_when": [
+          "D5 current back at the expected value and temperature at setpoint",
+          "Thickness profile within tolerance across all seven lanes"
+        ],
+        "quality_containment": "Check thickness of sheets made after the alert. Sheet from before the thickness lane went out of tolerance is fine."
+      }
+    },
+    {
+      "id": "F4",
+      "failure_mode": "roll_drive_coupling_wear",
+      "title": "Roll 2 drive coupling worn: chatter marks across the sheet",
+      "zone": "Z7",
+      "kb_part": "roll drives, gearboxes, bearings",
+      "failing_part": "Roll 2 drive train: coupling between gearbox and roll (worn elastomer insert or loose key)",
+      "telemetry": "telemetry/F4_rolls.csv",
+      "story": "Faint lines across the full width start appearing on the sheet, evenly spaced about 1.4 m apart. On a polished PC sheet they are easy to miss until the customer holds a sheet up to the light. Roll 2's drive torque shows a kick once per revolution.",
+      "signals": {
+        "line_speed_m_min": "Line speed",
+        "roll1_torque_pct / roll2_torque_pct / roll3_torque_pct": "Drive torque per polishing roll",
+        "roll2_bearing_DS_C / roll2_bearing_OS_C": "Roll 2 bearing temperatures, drive side and operator side",
+        "vision_mark_pitch_mm": "Inline camera: spacing between transverse marks (empty when there are no marks)"
+      },
+      "how_ai_detects": "Roll 2's torque repeats with a period that, multiplied by line speed, equals roll 2's circumference (pi x 450 mm = 1414 mm). Rolls 1 and 3 show no periodic torque. The camera measures the same mark spacing, which matches roll 2 and no other rotating part on the line. Bearing temperatures are normal, which points to the coupling or drive rather than a bearing.",
+      "ruled_out": [
+        "Rolls 1 and 3: no periodic torque, and their circumference (1257 mm) does not match the mark spacing",
+        "Pull rolls and laminating nip: their circumference (785 mm, 628 mm) does not match",
+        "Roll 2 bearing: both bearing temperatures are normal and steady",
+        "Thickness surging from the extruder: that has no fixed spacing linked to a roll"
+      ],
+      "expected_defects": ["chatter_marks"],
+      "repair": {
+        "do_now": [
+          "Have spares and a fitter ready, then plan a short stop. Marks tied to a roll's rotation will not go away with process changes, so running on only makes more scrap.",
+          "Stop the roll stack and apply lockout/tagout. Never reach into the nip while it runs.",
+          "Inspect the roll 2 drive coupling: elastomer insert, key and set screws. Turn the roll by hand and feel for backlash between gearbox and roll.",
+          "Replace the coupling insert (or key) and check alignment. If the coupling is fine, check gearbox backlash next."
+        ],
+        "spares": ["roll 2 coupling elastomer insert", "coupling key and set screws"],
+        "estimated_repair_min": 60,
+        "resume_when": [
+          "Roll 2 torque steady with no once-per-revolution kick",
+          "Camera reports no transverse marks for at least 3 roll 2 revolutions"
+        ],
+        "quality_containment": "Hold sheet from the first camera mark detection. Check held sheets against the light."
+      }
+    }
+  ]
+}

@@ -1,0 +1,377 @@
+<title>PC Line Watch</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: control-room screen. Live line feed on the left, alarm card on the right,
+   the four watched failure points as a strip under the feed. Single dark look on purpose
+   (projector, HMI convention: grey when normal, color only for abnormal). */
+:root {
+  --bg: #0e1113;
+  --panel: #151a1d;
+  --raise: #1c2327;
+  --line: #2b3439;
+  --ink: #e9ecea;
+  --ink-2: #aab3b6;
+  --mute: #75808a;
+  --ai: #6fd3e8;
+  --crit: #d03b3b;
+  --crit-hi: #ff5a52;
+  --warn: #fab219;
+  --good: #0ca30c;
+  --good-ink: #5fd35f;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font: 15px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px 20px;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ai); outline-offset: 2px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.brand { font: 700 26px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.brand span { color: var(--ai); }
+.spec { font: 13px/1.3 var(--f-mono); color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.spec b { color: var(--ink); font-weight: 500; }
+.bar .grow { flex: 1; }
+.status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 4px; font: 600 15px/1 var(--f-display); letter-spacing: .1em; text-transform: uppercase; background: var(--raise); border: 1px solid var(--line); }
+.status i { width: 10px; height: 10px; border-radius: 50%; background: var(--good); font-style: normal; }
+.status[data-s="alarm"] { background: var(--crit); border-color: var(--crit); color: #fff; }
+.status[data-s="alarm"] i { background: #fff; animation: blink 1s steps(2) infinite; }
+.status[data-s="idle"] i { background: var(--mute); }
+.clock { font: 500 15px var(--f-mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+@media (max-width: 980px) { .stage { grid-template-columns: minmax(0, 1fr); } .panel { position: static; max-height: none; } }
+
+.screen { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: #000; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+.screen video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.screen.frozen video { filter: saturate(.55) brightness(.8); }
+.overlay { position: absolute; inset: 0; pointer-events: none; }
+.hud { position: absolute; font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; background: rgba(8, 10, 12, .72); border-radius: 3px; color: var(--ink); }
+.hud.tl { top: 10px; left: 10px; display: flex; gap: 8px; align-items: center; }
+.hud.tl i { width: 8px; height: 8px; border-radius: 50%; background: var(--crit-hi); animation: blink 1.4s steps(2) infinite; }
+.hud.tr { top: 10px; right: 10px; color: var(--ai); }
+.hud.bl { bottom: 10px; left: 10px; color: var(--ink-2); }
+.screen.frozen .hud.tr { color: var(--crit-hi); }
+
+.sweep { position: absolute; top: 0; bottom: 0; width: 22%; left: -22%; background: linear-gradient(90deg, transparent, rgba(111, 211, 232, .28) 70%, rgba(111, 211, 232, .9) 99%, transparent); pointer-events: none; opacity: 0; }
+.sweep.run { animation: sweep .9s ease-in forwards; }
+@keyframes sweep { 0% { left: -22%; opacity: 1; } 100% { left: 100%; opacity: 1; } }
+
+.box { position: absolute; border: 2px solid var(--crit-hi); box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), 0 0 24px rgba(255, 90, 82, .45); animation: boxin .35s ease-out both, pulse 1.6s ease-in-out .35s infinite; }
+.box.lane { border-style: dashed; box-shadow: none; background: rgba(255, 90, 82, .14); animation: boxin .35s ease-out both; }
+.box .tag { position: absolute; left: -2px; bottom: 100%; margin-bottom: 4px; white-space: nowrap; background: var(--crit); color: #fff; font: 600 13px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; padding: 5px 7px; border-radius: 2px; }
+.box.lane .tag { bottom: auto; top: 100%; margin: 4px 0 0; background: rgba(8, 10, 12, .8); color: var(--crit-hi); }
+@keyframes boxin { from { transform: scale(1.35); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), 0 0 6px rgba(255, 90, 82, .2); } }
+@keyframes blink { 50% { opacity: .15; } }
+
+.start { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(8, 10, 12, .45); border: 0; cursor: pointer; padding: 16px; }
+.start span { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; background: rgba(14, 17, 19, .9); border: 1px solid var(--ai); color: var(--ink); border-radius: 6px; padding: 16px 26px; }
+.start b { font: 700 24px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; color: var(--ai); }
+.start small { font-size: 13px; color: var(--ink-2); }
+.start:hover span { background: var(--raise); }
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--raise); cursor: pointer; font-size: 14px; }
+.btn:hover { border-color: var(--mute); }
+.btn[aria-pressed="true"] { border-color: var(--ai); color: var(--ai); }
+.btn.primary { background: var(--good); border-color: var(--good); color: #fff; font: 600 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; padding: 12px 16px; width: 100%; justify-content: center; }
+.btn.primary:hover { filter: brightness(1.1); }
+.timer { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+.timer i { display: block; height: 100%; width: 0; background: var(--good-ink); }
+
+.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .stops { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stop { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px; display: grid; gap: 4px; min-width: 0; }
+.stop .z { font: 500 12px var(--f-mono); color: var(--mute); }
+.stop .p { font: 600 16px/1.15 var(--f-display); letter-spacing: .02em; }
+.pill { justify-self: start; display: inline-flex; align-items: center; gap: 5px; font: 500 12px/1 var(--f-mono); padding: 4px 6px; border-radius: 3px; background: var(--raise); color: var(--ink-2); }
+.stop[data-s="alarm"] { border-color: var(--crit); }
+.stop[data-s="alarm"] .pill { background: var(--crit); color: #fff; }
+.stop[data-s="done"] .pill { color: var(--good-ink); }
+
+.panel { position: sticky; top: max(12px, env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; min-width: 0; display: grid; gap: 14px; }
+.eyebrow { font: 500 12px var(--f-mono); color: var(--mute); letter-spacing: .08em; text-transform: uppercase; }
+.panel h2 { margin: 0; font: 700 26px/1.08 var(--f-display); letter-spacing: .01em; text-wrap: balance; }
+.alarmhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sev { display: inline-flex; gap: 6px; align-items: center; background: var(--crit); color: #fff; font: 600 13px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; padding: 5px 8px; border-radius: 3px; }
+.where { display: grid; gap: 6px; background: var(--raise); border-radius: 4px; padding: 12px; border-left: 3px solid var(--crit); }
+.where .zone { font: 500 13px var(--f-mono); color: var(--ink-2); }
+.where .part { font: 600 20px/1.2 var(--f-display); letter-spacing: .01em; }
+.where .loc { font: 13px var(--f-mono); color: var(--crit-hi); }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fact { background: var(--raise); border-radius: 4px; padding: 10px; }
+.fact b { display: block; font: 700 26px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.fact span { font-size: 12px; color: var(--ink-2); }
+.fact.ai b { color: var(--ai); }
+.fact.ok b { color: var(--good-ink); }
+.sec h3 { margin: 0 0 6px; font: 600 13px var(--f-mono); color: var(--mute); letter-spacing: .08em; text-transform: uppercase; }
+.sec ul, .sec ol { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sec li::marker { color: var(--mute); }
+.kb { display: flex; flex-wrap: wrap; gap: 6px; }
+.kb code { font: 12px var(--f-mono); background: var(--raise); border: 1px solid var(--line); padding: 3px 6px; border-radius: 3px; color: var(--ink-2); overflow-wrap: anywhere; }
+.safety { font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 10px; }
+.safety b { color: var(--warn); font-weight: 600; }
+
+.chart { background: var(--raise); border-radius: 4px; padding: 10px 10px 6px; }
+.chart .ct { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.chart svg { display: block; width: 100%; height: auto; touch-action: none; }
+.chart .read { font: 12px var(--f-mono); color: var(--ink-2); min-height: 1.5em; font-variant-numeric: tabular-nums; }
+.watch { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.watch li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; font-size: 14px; }
+.watch li b { font: 500 13px var(--f-mono); color: var(--ai); }
+.sum { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sum th { text-align: left; font: 500 12px var(--f-mono); color: var(--mute); text-transform: uppercase; letter-spacing: .06em; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.sum td { padding: 8px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.sum td.n { font: 500 14px var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+
+footer { margin-top: 18px; font-size: 12px; color: var(--mute); max-width: 90ch; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<header class="bar">
+  <div class="brand">Line <span>Watch</span></div>
+  <div class="spec" id="spec"></div>
+  <div class="grow"></div>
+  <div class="status" id="status" data-s="idle"><i></i><span>Standby</span></div>
+  <div class="clock" id="clock">00:00:00</div>
+</header>
+
+<main class="stage">
+  <section>
+    <div class="screen" id="screen">
+      <video id="vid" src="line.mp4" muted playsinline preload="auto"></video>
+      <div class="sweep" id="sweep"></div>
+      <div class="overlay" id="overlay"></div>
+      <div class="hud tl"><i></i>Live · Cam 01 · line walk</div>
+      <div class="hud tr" id="hudtr">AI watching</div>
+      <div class="hud bl" id="hudbl">Signals + camera</div>
+      <button class="start" id="start" type="button"><span><b>Start the demo</b><small>Walk the line. The AI stops at each failing machine.</small></span></button>
+    </div>
+    <div class="controls">
+      <button class="btn" id="auto" type="button" aria-pressed="false">Auto tour</button>
+      <button class="btn" id="sound" type="button" aria-pressed="false">Sound off</button>
+      <button class="btn" id="full" type="button">Full screen</button>
+      <button class="btn" id="replay" type="button">Restart</button>
+    </div>
+    <ol class="stops" id="stops"></ol>
+  </section>
+
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+</main>
+
+<footer>Video: AI-generated footage of a sheet extrusion line. Line signals: simulated (scenarios/simulate.py). Every alert on this page is the actual output of scenarios/diagnose.py, which reads the knowledge base in kb/line.json and kb/defects.json. Setpoints, part names and times are illustrative.</footer>
+
+<script>
+const DATA = __DATA__;
+const S = DATA.scenarios;
+const $ = (id) => document.getElementById(id);
+const vid = $("vid"), screen = $("screen"), overlay = $("overlay"), panel = $("panel");
+const RATE = 0.6, AUTO_S = 12;
+let idx = 0, mode = "idle", auto = false, autoTimer = null, t0 = performance.now();
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const hms = (s) => { s = Math.round(s); return [s / 3600 | 0, (s % 3600) / 60 | 0, s % 60].map((v) => String(v).padStart(2, "0")).join(":"); };
+const dur = (s) => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 120 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`;
+const short = (a) => a.kb_part.charAt(0).toUpperCase() + a.kb_part.slice(1);
+const PARTS = { F1: "Dryer regeneration heater", F2: "Screen pack", F3: "Die heater zone D5", F4: "Roll 2 drive coupling" };
+
+// header
+const L = DATA.line;
+$("spec").innerHTML = `<span><b>PC solid sheet</b> ${esc(L.product.replace("PC solid sheet, ", ""))}</span><span><b>${L.line_speed_m_min}</b> m/min</span><span><b>${L.output_kg_h}</b> kg/h</span>`;
+setInterval(() => { $("clock").textContent = hms((performance.now() - t0) / 1000); }, 500);
+
+function setStatus(s, text) { const el = $("status"); el.dataset.s = s; el.querySelector("span").textContent = text; }
+
+function renderStops() {
+  $("stops").innerHTML = S.map((d, i) => {
+    const a = d.alert, st = i < idx ? "done" : i === idx && mode === "alert" ? "alarm" : "wait";
+    const pill = st === "done" ? "✓ Repaired" : st === "alarm" ? "▲ Alarm" : "Watching";
+    return `<li class="stop" data-s="${st}"><span class="z">${a.zone} · ${esc(a.zone_name)}</span><span class="p">${esc(PARTS[a.scenario])}</span><span class="pill">${pill}</span></li>`;
+  }).join("");
+}
+
+function renderIdle() {
+  panel.innerHTML = `
+    <div class="eyebrow">AI watch · ${S.length} failure points armed</div>
+    <h2>The AI watches every machine on the line, not only the finished sheet.</h2>
+    <ul class="watch">
+      <li><b>Z1</b><span>Dryer: heater currents, regeneration and drying air, dew point</span></li>
+      <li><b>Z3</b><span>Melt pressure before and after the screen, screw and gear pump speed</span></li>
+      <li><b>Z6</b><span>Die: 7 heating zones, controller output and heater current per zone</span></li>
+      <li><b>Z7</b><span>Polishing rolls: drive torque per roll, bearing temperatures</span></li>
+      <li><b>Cam</b><span>Inline camera and thickness gauge on the finished sheet</span></li>
+    </ul>
+    <div class="sec"><h3>When something fails it</h3>
+      <ol><li>detects it from the signals, often before the sheet shows it</li>
+      <li>looks it up in the line knowledge base</li>
+      <li>points to the part to repair, with the steps to resume</li></ol></div>
+    <div class="kb"><code>kb/line.json</code><code>kb/defects.json</code><code>scenarios/diagnose.py</code></div>`;
+}
+
+function chartSVG(c) {
+  const W = 360, H = 150, ml = 40, mr = 10, mt = 30, mb = 22;
+  const xs = c.pts.map((p) => p[0]), ys = c.pts.map((p) => p[1]);
+  let y0 = Math.min(...ys), y1 = Math.max(...ys);
+  if (c.limit) { y0 = Math.min(y0, c.limit.y); y1 = Math.max(y1, c.limit.y); }
+  const pad = (y1 - y0) * 0.12 || 1; y0 -= pad; y1 += pad;
+  const [x0, x1] = c.x;
+  const X = (v) => ml + (v - x0) / (x1 - x0) * (W - ml - mr);
+  const Y = (v) => mt + (1 - (v - y0) / (y1 - y0)) * (H - mt - mb);
+  const step = niceStep((y1 - y0) / 3);
+  let grid = "";
+  for (let v = Math.ceil(y0 / step) * step; v <= y1; v += step) {
+    grid += `<line x1="${ml}" x2="${W - mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+    grid += `<text x="${ml - 6}" y="${Y(v) + 4}" text-anchor="end" fill="var(--mute)" font-size="10" font-family="var(--f-mono)">${+v.toFixed(2)}</text>`;
+  }
+  const xf = c.xunit === "h" ? (v) => `${+(v / 3600).toFixed(1)} h` : c.xunit === "min" ? (v) => `${Math.round(v / 60)} min` : (v) => `${Math.round(v)} s`;
+  let xt = "";
+  for (let k = 0; k <= 4; k++) { const v = x0 + (x1 - x0) * k / 4; xt += `<text x="${X(v)}" y="${H - 6}" text-anchor="${k === 0 ? "start" : k === 4 ? "end" : "middle"}" fill="var(--mute)" font-size="10" font-family="var(--f-mono)">${xf(v)}</text>`; }
+  const path = c.pts.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+  let marks = "";
+  const mark = (t, color, label, row, dash) => {
+    if (t == null || t < x0 || t > x1) return;
+    const x = X(t), anchor = x > W - 90 ? "end" : "start", dx = anchor === "end" ? -4 : 4;
+    marks += `<line x1="${x}" x2="${x}" y1="${mt - 4}" y2="${H - mb}" stroke="${color}" stroke-width="2" ${dash ? 'stroke-dasharray="4 3"' : ""}/>`;
+    marks += `<text x="${x + dx}" y="${row}" text-anchor="${anchor}" fill="var(--ink)" font-size="11" font-family="var(--f-mono)">${label}</text>`;
+  };
+  mark(c.t_alert, "var(--ai)", "▲ AI alert", 12, false);
+  mark(c.t_shows, "var(--warn)", "● Sheet shows it", 25, true);
+  let lim = "";
+  if (c.limit) lim = `<line x1="${ml}" x2="${W - mr}" y1="${Y(c.limit.y)}" y2="${Y(c.limit.y)}" stroke="var(--ink-2)" stroke-width="1" stroke-dasharray="2 3"/><text x="${W - mr}" y="${Y(c.limit.y) - 4}" text-anchor="end" fill="var(--ink-2)" font-size="10" font-family="var(--f-mono)">${esc(c.limit.label)}</text>`;
+  return { svg: `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(c.name)} over time, with the AI alert marked">
+    ${grid}<line x1="${ml}" x2="${W - mr}" y1="${H - mb}" y2="${H - mb}" stroke="var(--mute)" stroke-width="1"/>${xt}${lim}
+    <path d="${path}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>${marks}
+    <line class="xh" x1="0" x2="0" y1="${mt - 4}" y2="${H - mb}" stroke="var(--ink-2)" stroke-width="1" visibility="hidden"/>
+    <circle class="dot" r="4" fill="var(--ink)" stroke="var(--raise)" stroke-width="2" visibility="hidden"/>
+    <rect x="${ml}" y="0" width="${W - ml - mr}" height="${H}" fill="transparent"/></svg>`, X, Y, W, ml, mr, x0, x1, xf };
+}
+function niceStep(raw) { const p = 10 ** Math.floor(Math.log10(raw)), n = raw / p; return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * p; }
+function readout(c, t, xf) { let best = c.pts[0]; for (const p of c.pts) if (Math.abs(p[0] - t) < Math.abs(best[0] - t)) best = p; return best; }
+
+function renderAlert(d) {
+  const a = d.alert, c = d.chart, r = a.repair, ch = chartSVG(c);
+  const lead = a.lead_time_s ? `<div class="fact ai"><b>${dur(a.lead_time_s)}</b><span>warning before the sheet showed it</span></div>`
+    : `<div class="fact ai"><b>1 of ${Object.keys(DATA.line.rotating_elements_mm_diameter).length}</b><span>rotating parts match the mark spacing</span></div>`;
+  panel.innerHTML = `
+    <div class="alarmhead"><span class="sev">▲ Machine failure</span><span class="eyebrow">${a.scenario} · alert at ${hms(a.t_alert)}</span></div>
+    <h2>${esc(a.title)}</h2>
+    <div class="where">
+      <span class="zone">${a.zone} · ${esc(a.zone_name)} → ${esc(a.kb_part)}</span>
+      <span class="part">${esc(a.failing_part)}</span>
+      ${a.location ? `<span class="loc">${esc(a.location)}</span>` : ""}
+    </div>
+    <div class="facts">${lead}<div class="fact ok"><b>~${r.estimated_repair_min} min</b><span>estimated time to resume</span></div></div>
+    <div><button class="btn primary" id="resume" type="button">Part replaced · resume line ▸</button><div class="timer"><i id="timerbar"></i></div></div>
+    <div class="chart"><div class="ct"><span>${esc(c.name)} (${esc(c.unit)})</span></div>${ch.svg}<div class="read" id="read"></div></div>
+    <div class="sec"><h3>Why the AI is sure</h3><ul>${a.evidence.map((e) => `<li>${esc(e)}</li>`).join("")}</ul></div>
+    <div class="sec"><h3>Do now</h3><ol>${r.do_now.map((e) => `<li>${esc(e)}</li>`).join("")}</ol></div>
+    <div class="sec"><h3>Spares</h3><ul><li>${r.spares.map(esc).join(" · ")}</li></ul></div>
+    <div class="sec"><h3>Knowledge base used</h3><div class="kb"><code>kb/line.json › ${a.zone} › ${esc(a.kb_part)}</code>${a.sheet_defects.map((x) => `<code>kb/defects.json › ${x.id}</code>`).join("")}</div></div>
+    <div class="safety"><b>Safety:</b> ${esc(a.safety[0])}</div>
+`;
+  $("resume").onclick = resume;
+  const svg = panel.querySelector("svg"), xh = svg.querySelector(".xh"), dot = svg.querySelector(".dot"), read = $("read");
+  const show = (p) => { xh.setAttribute("x1", ch.X(p[0])); xh.setAttribute("x2", ch.X(p[0])); dot.setAttribute("cx", ch.X(p[0])); dot.setAttribute("cy", ch.Y(p[1])); xh.setAttribute("visibility", "visible"); dot.setAttribute("visibility", "visible"); read.textContent = `${ch.xf(p[0]).padEnd(7)} ${p[1]} ${c.unit}`; };
+  show(readout(c, c.t_alert));
+  read.textContent = `At the alert: ${read.textContent.trim()}`;
+  svg.addEventListener("pointermove", (e) => { const b = svg.getBoundingClientRect(); const vx = (e.clientX - b.left) / b.width * ch.W; const t = ch.x0 + (vx - ch.ml) / (ch.W - ch.ml - ch.mr) * (ch.x1 - ch.x0); show(readout(c, t)); });
+  svg.addEventListener("pointerleave", () => { show(readout(c, c.t_alert)); read.textContent = `At the alert: ${read.textContent.trim()}`; });
+}
+
+function renderSummary() {
+  panel.innerHTML = `
+    <div class="eyebrow">Shift summary</div>
+    <h2>${S.length} machine failures caught. Each one traced to the part to repair.</h2>
+    <div class="tablewrap"><table class="sum"><thead><tr><th>Zone</th><th>Part</th><th>Warning</th><th>Resume</th></tr></thead><tbody>
+    ${S.map((d) => { const a = d.alert; return `<tr><td class="n">${a.zone}</td><td>${esc(PARTS[a.scenario])}</td><td class="n">${a.lead_time_s ? dur(a.lead_time_s) + " early" : "on detection"}</td><td class="n">~${a.repair.estimated_repair_min} min</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="sec"><h3>What it did each time</h3><ol><li>Spotted the failure in the machine signals</li><li>Looked up the zone, part and defects in the knowledge base</li><li>Gave the repair steps, spares and the checks to restart</li></ol></div>
+    <button class="btn primary" id="again" type="button">Run the demo again ▸</button>`;
+  $("again").onclick = restart;
+}
+
+function drawBoxes(d) {
+  overlay.innerHTML = d.stop.boxes.map((b) => { const [l, t, w, h] = b.r; return `<div class="box ${b.kind || ""}" style="left:${l * 100}%;top:${t * 100}%;width:${w * 100}%;height:${h * 100}%"><span class="tag">${esc(b.label)}</span></div>`; }).join("");
+}
+
+function trigger() {
+  const d = S[idx];
+  mode = "alert";
+  vid.pause();
+  vid.currentTime = d.stop.t;
+  screen.classList.add("frozen");
+  $("hudtr").textContent = `▲ ${d.alert.zone} failure detected`;
+  $("hudbl").textContent = `Frozen at ${d.alert.zone} · ${d.alert.zone_name}`;
+  setStatus("alarm", "Alarm");
+  const reveal = () => { drawBoxes(d); renderAlert(d); renderStops(); startAuto(); };
+  if (reduce) return reveal();
+  const sw = $("sweep"); sw.classList.remove("run"); void sw.offsetWidth; sw.classList.add("run");
+  setTimeout(reveal, 750);
+}
+
+function startAuto() {
+  clearInterval(autoTimer);
+  const bar = $("timerbar"); if (bar) bar.style.width = "0";
+  if (!auto || mode !== "alert") return;
+  const start = performance.now();
+  autoTimer = setInterval(() => {
+    const f = (performance.now() - start) / (AUTO_S * 1000);
+    if ($("timerbar")) $("timerbar").style.width = `${Math.min(100, f * 100)}%`;
+    if (f >= 1) { clearInterval(autoTimer); resume(); }
+  }, 100);
+}
+
+function resume() {
+  clearInterval(autoTimer);
+  overlay.innerHTML = "";
+  screen.classList.remove("frozen");
+  idx++;
+  mode = "playing";
+  setStatus("ok", "Running");
+  $("hudtr").textContent = "AI watching";
+  $("hudbl").textContent = "Signals + camera";
+  renderStops();
+  panel.innerHTML = `<div class="eyebrow">Line running</div><h2>Repair confirmed. Line back in production.</h2><p class="safety" style="border:0;padding:0">The AI keeps watching the next machines down the line.</p>`;
+  play();
+}
+
+function play() { vid.playbackRate = RATE; const p = vid.play(); if (p) p.catch(() => {}); }
+
+function tick() {
+  if (mode === "playing" && idx < S.length && vid.currentTime >= S[idx].stop.t - 0.02) trigger();
+  requestAnimationFrame(tick);
+}
+
+function restart() {
+  clearInterval(autoTimer);
+  idx = 0; mode = "playing"; overlay.innerHTML = ""; screen.classList.remove("frozen");
+  vid.currentTime = 0; t0 = performance.now();
+  setStatus("ok", "Running"); renderStops(); renderIdle();
+  $("start").hidden = true;
+  setTimeout(play, 400);
+}
+
+vid.addEventListener("ended", () => { mode = "done"; setStatus("ok", "Running"); renderStops(); renderSummary(); if (auto) setTimeout(() => { if (mode === "done" && auto) restart(); }, AUTO_S * 1000); });
+$("start").onclick = restart;
+$("replay").onclick = restart;
+$("auto").onclick = (e) => { auto = !auto; e.currentTarget.setAttribute("aria-pressed", auto); startAuto(); };
+$("sound").onclick = (e) => { vid.muted = !vid.muted; e.currentTarget.setAttribute("aria-pressed", !vid.muted); e.currentTarget.textContent = vid.muted ? "Sound off" : "Sound on"; };
+$("full").onclick = () => { const el = document.documentElement; (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.())?.catch?.(() => {}); };
+
+renderStops(); renderIdle(); requestAnimationFrame(tick);
+</script>

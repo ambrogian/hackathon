@@ -1,0 +1,364 @@
+[
+  {
+    "id": "moisture_bubbles_splay",
+    "name": "Bubbles, voids and silver streaks (splay)",
+    "visual_signature": "Small round or elongated bubbles inside the sheet, spread across the whole width; silvery streaks running along the sheet. Sheet may look slightly hazy.",
+    "pattern": "random spots, whole width",
+    "origin_zones": ["Z1", "Z2"],
+    "likely_causes": [
+      "Resin not dry enough: dryer temperature low, dew point too high, or drying time too short for the current output",
+      "Dryer fault: desiccant saturated, regeneration heater failed, air leak in dryer hoses",
+      "Wet or poorly stored regrind added to the feed",
+      "Vacuum vent not degassing: vent port blocked or vacuum pump off/weak"
+    ],
+    "operator_actions": [
+      "Check the dryer panel: actual temperature at setpoint (typical PC about 120 °C) and dew point at -40 °C or lower. Note any dryer alarm.",
+      "Check drying time: hopper level must give at least about 4 h residence at current output. If the hopper is low, material is going through undried.",
+      "Check the vacuum gauge on the extruder vent: vacuum present, vent port not blocked with material.",
+      "Check regrind: stop or reduce wet or open-stored regrind.",
+      "If available, measure resin moisture (target below 0.02 %).",
+      "While the dryer recovers, reduce line output to increase drying time. Do not try to fix bubbles by raising melt temperature: it makes PC degrade faster."
+    ],
+    "confirm_fix": "Bubbles and streaks fade once properly dried material reaches the die. If the dryer was the cause this can take hours, because the hopper is full of wet material.",
+    "escalate_if": "Dryer alarm, dew point does not recover, or vacuum pump fault: call maintenance.",
+    "confusable_with": ["yellowing_degradation (gas bubbles from overheating come with yellowing)", "gels_unmelts_contamination"],
+    "severity": "scrap"
+  },
+  {
+    "id": "yellowing_degradation",
+    "name": "Yellowing / thermal degradation",
+    "visual_signature": "Yellow to brown tint across the sheet or in streaks. Compare against a good sample on a white background. Often comes with black specks or bubbles.",
+    "pattern": "whole surface or streaks",
+    "origin_zones": ["Z2", "Z6", "Z1"],
+    "likely_causes": [
+      "Melt temperature too high",
+      "Material held too long in the extruder or die (output reduced a lot, long stop with heat on)",
+      "One heating zone overshooting: failed thermocouple or controller",
+      "Dryer running too hot or material dried far too long",
+      "Wrong or degraded regrind"
+    ],
+    "operator_actions": [
+      "Compare actual vs setpoint on every barrel, adapter and die zone. Look for one zone running hotter than set or a reading that does not change.",
+      "Lower melt temperature in steps of 5-10 °C and watch the color.",
+      "Check output: if it was reduced a lot, residence time went up. Restore output if possible.",
+      "Check the dryer temperature is not above setpoint.",
+      "Stop regrind if its color or source is doubtful."
+    ],
+    "confirm_fix": "Color returns to normal after the degraded material is purged through.",
+    "escalate_if": "A zone will not control, or a thermocouple reading is implausible: maintenance.",
+    "confusable_with": ["black_specks"],
+    "severity": "scrap"
+  },
+  {
+    "id": "black_specks",
+    "name": "Black or brown specks",
+    "visual_signature": "Small dark particles in the sheet, randomly placed, sometimes in bursts. Often after a restart or a temperature change.",
+    "pattern": "random spots",
+    "origin_zones": ["Z2", "Z3", "Z4", "Z6"],
+    "likely_causes": [
+      "Burnt material breaking loose from dead spots in screw, adapter, gear pump or die",
+      "Screen pack torn or bypassed",
+      "Contaminated regrind or dirty material handling"
+    ],
+    "operator_actions": [
+      "Check pressure before and after the screen changer. Change the screen if the difference is high, or if it is suddenly low (possible torn screen).",
+      "Stop regrind and check the hopper and conveying lines for dirt.",
+      "If specks started after a restart or temperature change, purge: they often clear by themselves within a few minutes to an hour.",
+      "If specks persist, plan a die and adapter cleaning at the next stop."
+    ],
+    "confirm_fix": "Speck count drops steadily after screen change or purge.",
+    "escalate_if": "Specks continue after screen change and purge: die/adapter cleaning needed, involve the process engineer.",
+    "confusable_with": ["gels_unmelts_contamination", "yellowing_degradation"],
+    "severity": "scrap"
+  },
+  {
+    "id": "gels_unmelts_contamination",
+    "name": "Gels, unmelted particles, foreign material",
+    "visual_signature": "Clear or whitish specks or lumps ('fish eyes'), sometimes with a small tail; hazy spots from a foreign polymer.",
+    "pattern": "random spots",
+    "origin_zones": ["Z1", "Z2", "Z3"],
+    "likely_causes": [
+      "Unmelted pellets: feed and compression zone temperatures too low, or output too high for the screw",
+      "Foreign polymer in the feed (other plastics in regrind, wrong material in hopper)",
+      "Screen pack damaged"
+    ],
+    "operator_actions": [
+      "Check the screen changer pressure difference and change the screen if needed.",
+      "Check the feed and compression zone temperatures are at setpoint.",
+      "Check the hopper, dosing and regrind for foreign material or wrong grade.",
+      "As a test, reduce output slightly: if the particles drop, they are unmelts."
+    ],
+    "confirm_fix": "Particles disappear after screen change or feed correction.",
+    "escalate_if": "Wrong material in the feed system: stop feeding and inform the shift lead.",
+    "confusable_with": ["black_specks", "moisture_bubbles_splay"],
+    "severity": "scrap"
+  },
+  {
+    "id": "die_lines",
+    "name": "Die lines",
+    "visual_signature": "Thin straight lines running along the sheet (machine direction), at the same position across the width all the time. They do not move and are visible through the sheet, not only on one surface.",
+    "pattern": "continuous lines in machine direction, fixed position",
+    "origin_zones": ["Z6"],
+    "likely_causes": [
+      "Degraded material building up on the die lips",
+      "Particle stuck in the die lip gap",
+      "Nick or scratch on the die lip"
+    ],
+    "operator_actions": [
+      "Measure the line's position from the sheet edge. That is where to look on the die lip.",
+      "Inspect the die lip at that position.",
+      "If plant procedure allows, clean the lip at that position with a brass tool, wearing full heat protection. Never use steel.",
+      "If lines keep coming back, a small increase in die lip temperature can slow build-up.",
+      "If the lip is damaged, it needs polishing at the next planned stop."
+    ],
+    "confirm_fix": "Line disappears right after cleaning.",
+    "escalate_if": "Lip damaged, or lines return within hours: process engineer / maintenance.",
+    "confusable_with": ["roll_scratches_marks (only on one surface, often sharper)", "flow_lines_bank_marks (these move and change)"],
+    "severity": "quality"
+  },
+  {
+    "id": "thickness_variation_cd",
+    "name": "Thickness variation across the width",
+    "visual_signature": "Bands of optical distortion along the sheet, wavy look when viewed at an angle; thickness gauge profile not flat; one side thicker than the other.",
+    "pattern": "bands along the sheet, varies across width",
+    "origin_zones": ["Z6", "Z7"],
+    "likely_causes": [
+      "Die lip gap uneven (lip bolts)",
+      "Die heating zones out of balance across width",
+      "Choker bar setting",
+      "Roll stack gap not parallel (one side tighter)"
+    ],
+    "operator_actions": [
+      "Read the thickness gauge profile, or measure at several points across the width.",
+      "Thick spot in one place: close the lip bolt(s) at that position by a small step; thin spot: open. Wait for the change to reach the gauge before the next step.",
+      "Check die zone temperatures across the width: actual vs set.",
+      "One whole side thick or thin: check roll stack gap on both sides (operator and drive side)."
+    ],
+    "confirm_fix": "Gauge profile flattens within tolerance.",
+    "escalate_if": "Profile will not respond to bolt adjustments: process engineer.",
+    "confusable_with": ["thickness_surging_md"],
+    "severity": "quality"
+  },
+  {
+    "id": "thickness_surging_md",
+    "name": "Thickness pulsing along the length (surging)",
+    "visual_signature": "Thickness goes up and down along the sheet, giving bands across the full width that repeat every few seconds to minutes; may look like wide soft transverse waves.",
+    "pattern": "transverse bands, longer spacing",
+    "origin_zones": ["Z1", "Z2", "Z4", "Z11"],
+    "likely_causes": [
+      "Uneven feeding: hopper level low, material bridging",
+      "Melt pressure fluctuating before the gear pump",
+      "Gear pump inlet pressure control not stable",
+      "Roll stack or haul-off speed fluctuating"
+    ],
+    "operator_actions": [
+      "Check the hopper level and material flow at the feed throat.",
+      "Look at the melt pressure trend before the gear pump: is it cycling at the same rate as the bands?",
+      "Check the gear pump inlet pressure control loop is stable (not hunting).",
+      "Check roll stack and haul-off speed readings for fluctuation."
+    ],
+    "confirm_fix": "Melt pressure trend flat; bands stop.",
+    "escalate_if": "Control loop hunting or drive speed unstable: maintenance / controls.",
+    "confusable_with": ["chatter_marks (much finer spacing)"],
+    "severity": "quality"
+  },
+  {
+    "id": "chatter_marks",
+    "name": "Chatter marks",
+    "visual_signature": "Fine, evenly spaced lines across the width, repeating at a regular short interval (millimetres to a few centimetres).",
+    "pattern": "fine transverse lines, regular spacing",
+    "origin_zones": ["Z7", "Z11", "Z6"],
+    "likely_causes": [
+      "Vibration in the roll stack: drive, gearbox, coupling or bearing",
+      "Haul-off speed not matched to roll stack",
+      "Die too hot, causing stick-slip at the lips"
+    ],
+    "operator_actions": [
+      "Measure the spacing between marks. Compare with roll circumference and drive parts: the matching spacing points to the component.",
+      "Listen and feel (from a safe position) for noise or vibration at roll drives and bearings.",
+      "Check die temperature is not above setpoint.",
+      "Check the speed ratio between roll stack and haul-off."
+    ],
+    "confirm_fix": "Marks stop after the cause is corrected.",
+    "escalate_if": "Bearing or gearbox noise: maintenance, before it fails.",
+    "confusable_with": ["thickness_surging_md", "sticking_to_rolls"],
+    "severity": "quality"
+  },
+  {
+    "id": "dull_surface_orange_peel",
+    "name": "Dull surface, haze, orange peel",
+    "visual_signature": "Low gloss or matte patches, uneven reflection, fine bumpy 'orange peel' texture when a light is reflected in the surface.",
+    "pattern": "whole surface or patches",
+    "origin_zones": ["Z7"],
+    "likely_causes": [
+      "Polishing rolls too cold",
+      "Melt bank too small, sheet not fully pressed against the roll",
+      "Deposits (plate-out) or damage on the roll surface"
+    ],
+    "operator_actions": [
+      "Check each roll's temperature control unit: actual vs setpoint.",
+      "Raise polishing roll temperature in small steps.",
+      "Check the melt bank in the first nip: it should be small and even across the width.",
+      "Inspect the roll surface for deposits or damage; clean per procedure with approved materials only."
+    ],
+    "confirm_fix": "Gloss returns within minutes of a roll temperature change.",
+    "escalate_if": "Roll surface damaged: roll needs re-chroming/polishing, maintenance.",
+    "confusable_with": ["moisture_bubbles_splay (haze from moisture)"],
+    "severity": "quality"
+  },
+  {
+    "id": "flow_lines_bank_marks",
+    "name": "Flow lines, V-marks, bank marks",
+    "visual_signature": "Wavy, V-shaped or irregular lines that move and change, often near the center or edges.",
+    "pattern": "irregular, moving marks",
+    "origin_zones": ["Z7", "Z6"],
+    "likely_causes": [
+      "Melt bank in the first nip too big (excess melt rolls over itself)",
+      "Melt bank too small or uneven across width",
+      "Melt temperature too low"
+    ],
+    "operator_actions": [
+      "Look at the melt bank between roll 1 and roll 2 from the safe viewing position.",
+      "Bank too big: increase roll speed slightly or reduce output. Bank too small: the opposite.",
+      "Bank uneven across width: adjust die profile (see thickness_variation_cd).",
+      "Check melt temperature is at setpoint."
+    ],
+    "confirm_fix": "Bank small and even, marks disappear.",
+    "escalate_if": "Marks persist with a good bank: process engineer.",
+    "confusable_with": ["die_lines"],
+    "severity": "quality"
+  },
+  {
+    "id": "sticking_to_rolls",
+    "name": "Sheet sticking to rolls",
+    "visual_signature": "Sheet follows a roll past the normal release point; transverse release marks or tear marks on the surface; release line on the roll is uneven.",
+    "pattern": "transverse marks",
+    "origin_zones": ["Z7"],
+    "likely_causes": [
+      "Roll temperature too high",
+      "Melt temperature too high",
+      "Speed ratio between rolls wrong"
+    ],
+    "operator_actions": [
+      "Identify which roll the sheet sticks to.",
+      "Lower that roll's temperature in small steps.",
+      "Check melt temperature.",
+      "Check roll speed ratios."
+    ],
+    "confirm_fix": "Sheet releases cleanly at a straight line.",
+    "escalate_if": "Roll temperature will not control: maintenance (temperature control unit).",
+    "confusable_with": ["chatter_marks"],
+    "severity": "quality"
+  },
+  {
+    "id": "warp_bow_stress",
+    "name": "Warp, bow, built-in stress",
+    "visual_signature": "Sheet not flat on the conveyor or stack: edges curling up or down, bowing, waviness. Optical distortion under polarized light.",
+    "pattern": "sheet shape",
+    "origin_zones": ["Z7", "Z8", "Z11"],
+    "likely_causes": [
+      "Top and bottom surfaces cooled unevenly (roll temperatures unbalanced)",
+      "Uneven cooling across the width (drafts, one side hotter)",
+      "Haul-off pulling too hard or too little",
+      "Sheets stacked while still too hot"
+    ],
+    "operator_actions": [
+      "Note which way the sheet curls (up or down) and whether it is edges or center.",
+      "The side that stays hotter longer shrinks more and ends up on the concave side. Adjust the roll temperatures to even out the two surfaces: make one small change and watch, because the right direction depends on your stack layout.",
+      "Check for drafts or fans hitting one side of the conveyor.",
+      "Check the haul-off speed ratio to the roll stack.",
+      "Check sheets are cool enough before stacking."
+    ],
+    "confirm_fix": "Sheet lies flat after cooling.",
+    "escalate_if": "Warp persists after balancing: process engineer.",
+    "confusable_with": [],
+    "severity": "quality"
+  },
+  {
+    "id": "edge_and_cut_cracks",
+    "name": "Cracked edges, cracks at the cut",
+    "visual_signature": "Cracks starting at the sheet edge or the cut line, chipped or whitened edges, rough cut faces.",
+    "pattern": "edges / cut line",
+    "origin_zones": ["Z9", "Z12"],
+    "likely_causes": [
+      "Edge trimming or cutting when the sheet is too cold (PC cracks easily from a notch)",
+      "Dull or damaged trim knives or saw blade",
+      "Wrong saw speed or feed rate"
+    ],
+    "operator_actions": [
+      "Check trim knives and saw blade condition (lockout first). Replace if dull or chipped.",
+      "Check the sheet temperature at trim and saw positions; trim warmer if possible.",
+      "Check saw speed and feed rate settings."
+    ],
+    "confirm_fix": "Clean edges and cut faces.",
+    "escalate_if": "Blade or knife damage repeating: maintenance.",
+    "confusable_with": [],
+    "severity": "scrap"
+  },
+  {
+    "id": "protective_film_defects",
+    "name": "Protective (masking) film defects",
+    "visual_signature": "Wrinkles or trapped air bubbles under the masking film, film not covering the edge, film lifting or misaligned.",
+    "pattern": "on the film layer",
+    "origin_zones": ["Z10"],
+    "likely_causes": [
+      "Film unwind tension too high or too low",
+      "Laminating nip pressure too low or uneven",
+      "Film roll misaligned",
+      "Sheet too hot or too cold at the laminator"
+    ],
+    "operator_actions": [
+      "Check film unwind tension; adjust in small steps.",
+      "Check laminating nip pressure on both sides.",
+      "Check film roll alignment to the sheet.",
+      "Check sheet temperature at the laminator."
+    ],
+    "confirm_fix": "Film lies flat with no trapped air.",
+    "escalate_if": "Tension control not working: maintenance.",
+    "confusable_with": [],
+    "severity": "quality"
+  },
+  {
+    "id": "roll_scratches_marks",
+    "name": "Roll scratches and repeating roll marks",
+    "visual_signature": "Sharp lines along the sheet on one surface only, or marks that repeat at a fixed distance along the sheet.",
+    "pattern": "lines on one surface, or repeating marks",
+    "origin_zones": ["Z7", "Z8", "Z11"],
+    "likely_causes": [
+      "Damage or deposit on a polishing roll",
+      "Debris on a conveyor roller or haul-off roll",
+      "A roller not turning and the sheet sliding over it"
+    ],
+    "operator_actions": [
+      "Measure the distance between repeating marks and compare it with roll circumferences to find the roll.",
+      "Check which surface (top or bottom) has the mark to narrow down which rolls touch it.",
+      "Check conveyor rollers turn freely and are clean.",
+      "Inspect the identified roll surface."
+    ],
+    "confirm_fix": "Marks stop after cleaning or fixing the roll.",
+    "escalate_if": "Polishing roll damaged: maintenance.",
+    "confusable_with": ["die_lines (visible through the sheet, fixed position)"],
+    "severity": "quality"
+  },
+  {
+    "id": "uv_layer_defects",
+    "name": "UV layer missing or uneven",
+    "visual_signature": "Not visible in a normal photo. Under a UV lamp the protected surface looks different; gaps show as bright or dark areas.",
+    "pattern": "not visible in a normal photo",
+    "origin_zones": ["Z5"],
+    "likely_causes": [
+      "Co-extruder hopper empty or dosing stopped",
+      "Co-extruder stopped or running at wrong speed",
+      "Feedblock settings, or viscosity mismatch between layers"
+    ],
+    "operator_actions": [
+      "Check the co-extruder is running and its hopper has material.",
+      "Check the UV layer across the width with a UV lamp.",
+      "Check co-extruder speed and feedblock settings against the recipe."
+    ],
+    "confirm_fix": "UV lamp check shows even coverage.",
+    "escalate_if": "Coverage uneven with co-extruder running correctly: process engineer.",
+    "confusable_with": [],
+    "severity": "scrap"
+  }
+]

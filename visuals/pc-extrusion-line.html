@@ -1,0 +1,922 @@
+<title>PC Sheet Extrusion Line</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: plant-floor sheet. Full-width side elevation of the running line, operator panels in a two-column grid below, then plan view and close-ups. Stacks to one column on phones. */
+:root{
+  --bg:#e8ebe7; --surface:#f6f7f4; --ink:#1b2120; --muted:#56625f; --line:#c5ccc6;
+  --wall:#dde2dc; --floor:#cdd2cb; --steel:#98a29f; --machine:#527176; --machine-2:#37504f;
+  --guard:#efb40a; --on-guard:#1b1f1e; --hot:#d6461a; --melt:#ee8a22; --sheet:#64aedb;
+  --pellet:#f4f2e8; --chrome:#b7c2c4; --carton:#c6a167; --person:#68736f; --glint:rgba(255,255,255,.85);
+  --hmi-bg:#0e1614; --hmi-panel:#15201d; --hmi-ink:#d5f2e2; --hmi-dim:#7ea594; --hmi-ok:#4fd18b; --hmi-warn:#ffb020; --hmi-line:#24332f;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121615; --surface:#1a201e; --ink:#e3e9e6; --muted:#97a39f; --line:#2c3532;
+  --wall:#171d1b; --floor:#232a28; --steel:#4c5653; --machine:#5e8287; --machine-2:#3f5b5d;
+  --guard:#f2bf2a; --hot:#ff5a28; --melt:#ff9a3c; --sheet:#76c0ec; --pellet:#dcdfd2; --chrome:#7e8b8f; --carton:#8d7046; --person:#5a6663;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#121615; --surface:#1a201e; --ink:#e3e9e6; --muted:#97a39f; --line:#2c3532;
+  --wall:#171d1b; --floor:#232a28; --steel:#4c5653; --machine:#5e8287; --machine-2:#3f5b5d;
+  --guard:#f2bf2a; --hot:#ff5a28; --melt:#ff9a3c; --sheet:#76c0ec; --pellet:#dcdfd2; --chrome:#7e8b8f; --carton:#8d7046; --person:#5a6663;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px;display:grid;gap:28px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.015em;text-wrap:balance;margin:0;line-height:1}
+h1{font-size:clamp(36px,5.4vw,60px)}
+h2{font-size:clamp(26px,3vw,32px)}
+h3{font-size:24px}
+p{margin:0}
+.lede{max-width:70ch;color:var(--muted);font-size:16px}
+header{display:grid;gap:10px}
+.tape{height:6px;max-width:220px;background:repeating-linear-gradient(-45deg,var(--guard) 0 10px,var(--ink) 10px 20px);border-radius:1px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 20px}
+.sec-head p{color:var(--muted);max-width:70ch}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px}
+.run{font:600 14px var(--f-body);display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--ink);background:var(--ink);color:var(--surface);border-radius:4px;padding:8px 14px;cursor:pointer;min-width:126px}
+.run[aria-pressed="false"]{background:transparent;color:var(--ink)}
+.run .lamp{width:9px;height:9px;border-radius:50%;background:var(--hmi-ok);box-shadow:0 0 0 2px rgba(79,209,139,.25)}
+.run[aria-pressed="false"] .lamp{background:var(--guard);box-shadow:none}
+.ctl{display:grid;gap:4px}
+.ctl label{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ctl output{color:var(--ink);font-weight:600;letter-spacing:0}
+select,input[type=range]{accent-color:var(--machine)}
+select{font:500 14px var(--f-mono);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:6px 8px}
+input[type=range]{width:min(240px,70vw)}
+.kpis{display:flex;flex-wrap:wrap;gap:6px 22px;margin-left:auto}
+.kpi{display:grid}
+.kpi span{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font:600 20px var(--f-mono);font-variant-numeric:tabular-nums}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+
+/* figures */
+.fig{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto}
+#lineSvg{min-width:900px}
+#planSvg{min-width:860px}
+.fig-cap{font-size:13px;color:var(--muted);padding:8px 14px 12px;border-top:1px solid var(--line)}
+
+/* svg paint */
+.wall{fill:var(--wall)} .win{fill:var(--surface);opacity:.75} .col{fill:var(--steel);opacity:.35}
+.floor{fill:var(--floor)} .m{fill:var(--machine)} .m2{fill:var(--machine-2)} .st{fill:var(--steel)} .ch{fill:var(--chrome)}
+.gd{fill:var(--guard)} .hot{fill:var(--hot)} .meltf{fill:var(--melt)} .carton{fill:var(--carton)} .person{fill:var(--person)}
+.back{fill:var(--steel);opacity:.5} .sheetf{fill:var(--sheet)} .hmif{fill:var(--hmi-bg)} .okf{fill:var(--hmi-ok)}
+.pel{fill:var(--pellet);stroke:var(--steel);stroke-width:.6} .pelbg{fill:var(--chrome);opacity:.55}
+.edge{stroke:var(--machine-2);stroke-width:1.5}
+.tube{fill:none;stroke:var(--steel);stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.flowdash{fill:none;stroke:var(--pellet);stroke-width:2.4;stroke-dasharray:2 9;stroke-linecap:round}
+.hose{fill:none;stroke:var(--machine-2);stroke-width:5;stroke-linecap:round}
+.meltpipe{fill:none;stroke:var(--steel);stroke-width:9;stroke-linejoin:round}
+.meltcore{fill:none;stroke:var(--hot);stroke-width:3;stroke-linejoin:round}
+.meltline{fill:none;stroke:var(--melt);stroke-width:5}
+.sheetline{fill:none;stroke:var(--sheet);stroke-width:4.5}
+.sheetmarks{fill:none;stroke:var(--glint);stroke-width:1.6;stroke-dasharray:3 21}
+.vac{fill:none;stroke:var(--machine-2);stroke-width:4;stroke-linejoin:round}
+.beam{stroke:var(--hot);stroke-width:2;stroke-dasharray:2 2}
+.flight{stroke:var(--chrome);stroke-width:3.2;stroke-linecap:round}
+.screw{fill:var(--chrome)}
+.film{fill:none;stroke:var(--pellet);stroke-width:2}
+.floorlbl{font:600 11px var(--f-mono);letter-spacing:.1em;fill:var(--muted);text-anchor:middle}
+.svgnote{font:500 12px var(--f-mono);fill:var(--muted)}
+.svglbl{font:500 15px var(--f-body);fill:var(--ink)}
+.svglbl.mut{fill:var(--muted)}
+.svgsm{font:500 12px var(--f-mono);fill:var(--muted)}
+.pin{cursor:pointer}
+.pin circle{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.pin text{font:600 13px var(--f-mono);fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pin.on circle{fill:var(--guard);stroke:var(--on-guard)}
+.pin.on text{fill:var(--on-guard)}
+.pin:focus{outline:none}
+.pin:focus-visible circle{stroke:var(--hot);stroke-width:3.5}
+.pin:hover circle{stroke-width:3}
+
+/* station chips */
+.stations{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+.chip{display:flex;gap:9px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);padding:7px 10px;border-radius:4px;font:500 13.5px var(--f-body);color:var(--ink);cursor:pointer;min-width:0}
+.chip:hover{border-color:var(--muted)}
+.chip .n{font:600 12px var(--f-mono);width:24px;height:24px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;flex:none}
+.chip[aria-pressed="true"]{border-color:var(--ink)}
+.chip[aria-pressed="true"] .n{background:var(--guard);color:var(--on-guard);border-color:var(--guard)}
+
+/* ops grid */
+.ops{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.ops{grid-template-columns:minmax(0,1fr)}}
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px 22px 22px;display:grid;gap:14px;min-width:0}
+.detail .top{display:flex;gap:12px;align-items:center}
+.detail .badge{font:600 15px var(--f-mono);width:34px;height:34px;border-radius:50%;background:var(--guard);color:var(--on-guard);display:grid;place-items:center;flex:none}
+.detail .role{max-width:68ch}
+.params{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);margin:0}
+.params div{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 12px;display:grid;gap:2px;min-width:0}
+.params dt{font:500 11px var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.params dd{margin:0;font:500 14px var(--f-mono);font-variant-numeric:tabular-nums}
+.watch h4{margin:0 0 6px;font:600 11px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--hot)}
+.watch ul{margin:0;padding-left:18px;display:grid;gap:4px}
+
+/* HMI */
+.hmi{background:var(--hmi-bg);color:var(--hmi-ink);border-radius:6px;padding:14px;display:grid;gap:10px;font-family:var(--f-mono);min-width:0}
+.hmi-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--hmi-dim)}
+.state{display:inline-flex;align-items:center;gap:6px;color:var(--hmi-ok)}
+.state::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.state.paused{color:var(--hmi-warn)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tile{background:var(--hmi-panel);border:1px solid var(--hmi-line);border-radius:4px;padding:8px 10px;display:grid;gap:2px;min-width:0}
+.tile.wide{grid-column:1/-1}
+.tile .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--hmi-dim)}
+.tile .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .s{font-size:11.5px;color:var(--hmi-dim);font-variant-numeric:tabular-nums}
+.tile .s.warn,.tile .v.warn{color:var(--hmi-warn)}
+.zones{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-top:4px}
+.zones div{display:grid;text-align:center;background:var(--hmi-bg);border-radius:3px;padding:4px 0;font-variant-numeric:tabular-nums}
+.zones b{font-size:13px;font-weight:600}
+.zones i{font-style:normal;font-size:10px;color:var(--hmi-dim)}
+.zones .bar{height:3px;border-radius:2px;background:var(--hot);margin:3px 6px 0;opacity:.9}
+.spark{width:100%;height:64px;display:block}
+.spark .band{fill:var(--hmi-ok);opacity:.12}
+.spark .tgt{stroke:var(--hmi-dim);stroke-dasharray:3 3;stroke-width:1}
+.spark .ln{fill:none;stroke:var(--hmi-ok);stroke-width:1.6}
+.spark .dot{fill:var(--hmi-ok)}
+.spark text{font:500 9.5px var(--f-mono);fill:var(--hmi-dim)}
+
+/* close-ups */
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:900px){.duo{grid-template-columns:minmax(0,1fr)}}
+.duo .fig svg{min-width:520px}
+.card-head{padding:14px 16px 4px;display:grid;gap:4px}
+.card-head p{color:var(--muted);font-size:14px;max-width:62ch}
+.axis{stroke:var(--line);stroke-width:1}
+.prof{fill:none;stroke:var(--hot);stroke-width:2.5}
+.profdot{fill:var(--surface);stroke:var(--hot);stroke-width:2}
+.limit{stroke:var(--hot);stroke-width:1.2;stroke-dasharray:5 4;opacity:.8}
+.zoneband{fill:var(--bg)} .zoneband.alt{fill:var(--line);opacity:.6}
+.flow{fill:none;stroke:var(--hot);stroke-width:1.4;stroke-dasharray:4 7;opacity:.85}
+.leader{stroke:var(--muted);stroke-width:1}
+.walk{fill:none;stroke:var(--guard);stroke-width:3;stroke-dasharray:14 8}
+.zone{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.bldg{fill:var(--wall);stroke:var(--ink);stroke-width:4}
+.yard{fill:var(--bg)}
+.rail{stroke:var(--steel);stroke-width:2}
+.trim{fill:none;stroke:var(--sheet);stroke-width:2.5;stroke-dasharray:6 5}
+.regrind{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:3 6}
+.planticks{stroke:var(--glint);stroke-width:42;stroke-dasharray:1.5 18.5}
+
+.notes{font-size:13px;color:var(--muted);max-width:90ch;display:grid;gap:6px;border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Plant visual · Polycarbonate solid sheet · 2050 × 3050 mm format</div>
+    <h1>PC Sheet Extrusion Line</h1>
+    <div class="tape" aria-hidden="true"></div>
+    <p class="lede">A running sheet line drawn station by station, from resin silo to finished pallet. Change thickness or line speed and the animation, output and readings follow. Click any numbered marker to see what that machine does, its typical settings and the defects it causes when it drifts.</p>
+  </header>
+
+  <section style="display:grid;gap:10px" aria-label="Line in operation">
+    <div class="toolbar">
+      <button id="run" class="run" type="button" aria-pressed="true"><span class="lamp" aria-hidden="true"></span><span id="runTxt">Pause line</span></button>
+      <div class="ctl">
+        <label for="thick">Sheet thickness</label>
+        <select id="thick">
+          <option value="1">1 mm</option><option value="2">2 mm</option><option value="3" selected>3 mm</option><option value="4">4 mm</option><option value="6">6 mm</option><option value="8">8 mm</option><option value="12">12 mm</option>
+        </select>
+      </div>
+      <div class="ctl">
+        <label for="speed">Line speed <output id="speedOut" for="speed">2.40 m/min</output></label>
+        <input id="speed" type="range" min="0.2" max="4.5" step="0.05" value="2.4">
+      </div>
+      <div class="kpis">
+        <div class="kpi"><span>Net output</span><b id="kOut">–</b></div>
+        <div class="kpi"><span>Sheets</span><b id="kSheets">–</b></div>
+        <div class="kpi"><span>Screw</span><b id="kRpm">–</b></div>
+      </div>
+    </div>
+
+    <figure class="fig" style="margin:0">
+      <svg id="lineSvg" viewBox="0 0 1600 520" role="img" aria-labelledby="lineT lineD">
+        <title id="lineT">PC sheet extrusion line, side elevation</title>
+        <desc id="lineD">Pellets travel from a bin and dryer into the main extruder, through a screen changer, melt pump and flat die into a three-roll calender, then along a cooling conveyor past a thickness gauge, edge trim, haul-off, film lamination, a cross-cut saw and a stacker.</desc>
+        <defs>
+          <pattern id="pelPat" width="12" height="12" patternUnits="userSpaceOnUse">
+            <rect width="12" height="12" class="pelbg"/>
+            <circle cx="3" cy="3" r="2.3" class="pel"/><circle cx="9" cy="9" r="2.3" class="pel"/>
+          </pattern>
+          <linearGradient id="meltG" x1="352" x2="758" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0" style="stop-color:var(--pellet)"/>
+            <stop offset=".32" style="stop-color:var(--melt);stop-opacity:.45"/>
+            <stop offset="1" style="stop-color:var(--melt)"/>
+          </linearGradient>
+          <clipPath id="boreClip"><rect x="352" y="290" width="406" height="26"/></clipPath>
+        </defs>
+
+        <!-- hall -->
+        <rect class="wall" width="1600" height="470"/>
+        <g class="win">
+          <rect x="30" y="16" width="96" height="30"/><rect x="160" y="16" width="96" height="30"/><rect x="290" y="16" width="96" height="30"/><rect x="420" y="16" width="96" height="30"/>
+          <rect x="550" y="16" width="96" height="30"/><rect x="680" y="16" width="96" height="30"/><rect x="810" y="16" width="96" height="30"/><rect x="940" y="16" width="96" height="30"/>
+          <rect x="1070" y="16" width="96" height="30"/><rect x="1200" y="16" width="96" height="30"/><rect x="1330" y="16" width="96" height="30"/><rect x="1460" y="16" width="96" height="30"/>
+        </g>
+        <rect class="col" x="-2" y="0" width="16" height="470"/><rect class="col" x="516" y="0" width="16" height="470"/><rect class="col" x="1036" y="0" width="16" height="470"/><rect class="col" x="1572" y="0" width="16" height="470"/>
+        <rect class="st" x="0" y="58" width="1600" height="7"/>
+        <rect class="floor" y="470" width="1600" height="50"/>
+        <rect class="gd" y="474" width="1600" height="3"/>
+        <text class="svgnote" x="1588" y="88" text-anchor="end">Time-lapse ×12 · schematic</text>
+
+        <!-- coex stand + vacuum line (behind) -->
+        <rect class="back" x="520" y="226" width="10" height="244"/><rect class="back" x="796" y="226" width="10" height="244"/>
+        <rect class="back" x="510" y="222" width="302" height="7"/>
+        <path class="vac" d="M588 250 V238 H636 V432"/>
+        <rect class="m" x="616" y="430" width="48" height="40" rx="3"/><rect class="m2" x="624" y="440" width="32" height="6"/>
+
+        <!-- 1 resin bin + conveying -->
+        <rect class="m2" x="18" y="462" width="86" height="8"/>
+        <path class="carton" d="M22 400 L100 400 L100 462 L22 462 Z"/>
+        <rect x="26" y="398" width="70" height="10" fill="url(#pelPat)"/>
+        <path class="tube" d="M60 412 V84 H365 V96"/>
+        <path id="convey" class="flowdash" d="M60 412 V84 H365 V96"/>
+
+        <!-- 2 dryer -->
+        <rect class="m" x="112" y="330" width="80" height="140" rx="3"/>
+        <rect class="hmif" x="124" y="344" width="44" height="24" rx="2"/>
+        <text x="146" y="360" text-anchor="middle" style="font:600 10px var(--f-mono);fill:var(--hmi-ok)">120°C</text>
+        <rect class="m2" x="124" y="378" width="56" height="4"/><rect class="m2" x="124" y="386" width="56" height="4"/><rect class="m2" x="124" y="394" width="56" height="4"/>
+        <path class="hose" d="M150 330 C150 240 250 190 330 180"/>
+        <path class="hose" d="M172 330 C176 262 262 222 330 206"/>
+
+        <!-- hopper -->
+        <rect class="m2" x="344" y="96" width="42" height="14" rx="2"/>
+        <rect class="ch" x="330" y="110" width="70" height="122"/>
+        <path class="ch" d="M330 232 H400 L375 268 H355 Z"/>
+        <path fill="url(#pelPat)" d="M335 150 H395 V232 L373 264 H357 L335 232 Z"/>
+        <rect class="m2" x="357" y="266" width="16" height="16"/>
+
+        <!-- 3 drive + barrel -->
+        <rect class="m" x="204" y="282" width="72" height="54" rx="6"/>
+        <g class="m2"><rect x="214" y="290" width="52" height="3"/><rect x="214" y="298" width="52" height="3"/><rect x="214" y="306" width="52" height="3"/><rect x="214" y="314" width="52" height="3"/><rect x="214" y="322" width="52" height="3"/></g>
+        <rect class="gd" x="276" y="294" width="18" height="30" rx="2"/>
+        <rect class="m2" x="294" y="268" width="58" height="72" rx="4"/>
+        <rect class="m2" x="200" y="340" width="560" height="14"/>
+        <rect class="m" x="214" y="354" width="16" height="116"/><rect class="m" x="470" y="354" width="16" height="116"/><rect class="m" x="740" y="354" width="16" height="116"/>
+        <rect class="m2" x="214" y="448" width="542" height="8"/>
+        <rect class="st" x="350" y="284" width="410" height="38"/>
+        <rect x="352" y="290" width="406" height="26" fill="url(#meltG)"/>
+        <g clip-path="url(#boreClip)">
+          <polygon class="screw" points="352,299 470,299 560,296 580,296 586,300 606,300 640,295 758,295 758,311 640,311 606,306 586,306 580,310 560,310 470,307 352,307"/>
+          <g id="flights"></g>
+        </g>
+        <rect class="sheetf" x="356" y="280" width="18" height="8" opacity=".8"/>
+        <g id="heaters"></g>
+        <rect class="m2" x="580" y="250" width="16" height="34"/>
+
+        <!-- 4 coex -->
+        <rect class="m" x="530" y="192" width="40" height="30" rx="3"/>
+        <rect class="st" x="570" y="200" width="210" height="18"/>
+        <g id="heatersB"></g>
+        <rect class="ch" x="584" y="150" width="28" height="34"/>
+        <path class="ch" d="M584 184 H612 L602 198 H594 Z"/>
+        <path class="meltpipe" d="M780 209 H846 V284"/>
+        <path class="meltcore" d="M780 209 H846 V284"/>
+
+        <!-- 5 screen changer + melt pump -->
+        <rect class="ch" x="768" y="238" width="16" height="34"/>
+        <rect class="m2" x="760" y="272" width="32" height="62" rx="2"/>
+        <rect class="m" x="792" y="282" width="40" height="42" rx="3"/>
+        <g id="gear"></g>
+        <rect class="m2" x="808" y="324" width="8" height="20"/>
+        <rect class="m" x="790" y="344" width="44" height="34" rx="4"/>
+        <rect class="m2" x="800" y="378" width="28" height="92"/>
+
+        <!-- 6 feedblock + die -->
+        <rect class="st" x="832" y="284" width="22" height="40"/>
+        <path class="st edge" d="M854 266 H890 L906 300 V308 L890 342 H854 Z"/>
+        <rect class="hot" x="860" y="272" width="26" height="5" rx="2"/><rect class="hot" x="860" y="331" width="26" height="5" rx="2"/>
+        <g class="m2"><circle cx="864" cy="262" r="3"/><circle cx="874" cy="262" r="3"/><circle cx="884" cy="262" r="3"/></g>
+
+        <!-- 7 calender -->
+        <rect x="918" y="240" width="68" height="200" rx="4" class="m" opacity=".35"/>
+        <rect x="918" y="240" width="68" height="200" rx="4" fill="none" stroke="var(--machine)" stroke-width="3"/>
+        <rect class="m2" x="912" y="440" width="80" height="30"/>
+        <g id="rolls"></g>
+        <rect class="m" x="1000" y="432" width="44" height="38" rx="3"/>
+        <text class="svgnote" x="1022" y="455" text-anchor="middle" style="font-size:9.5px">TCU</text>
+
+        <!-- operator behind the line -->
+        <rect class="m2" x="1064" y="328" width="5" height="142"/>
+        <rect class="hmif" x="1044" y="300" width="44" height="30" rx="2"/>
+        <rect class="okf" x="1050" y="307" width="20" height="3"/><rect class="okf" x="1050" y="314" width="30" height="3" opacity=".6"/><rect class="okf" x="1050" y="321" width="14" height="3" opacity=".8"/>
+        <g>
+          <rect class="person" x="1097" y="328" width="14" height="142" rx="4"/><rect class="person" x="1114" y="328" width="14" height="142" rx="4"/>
+          <rect class="gd" x="1093" y="244" width="40" height="92" rx="10"/>
+          <rect class="person" x="1072" y="252" width="30" height="12" rx="6" transform="rotate(28 1100 258)"/>
+          <circle class="person" cx="1113" cy="228" r="13"/>
+          <path class="gd" d="M1098 226 A15 15 0 0 1 1128 226 L1131 228 H1095 Z"/>
+        </g>
+
+        <!-- 8 conveyor + gauge -->
+        <rect class="m2" x="1000" y="421" width="296" height="8"/>
+        <rect class="m2" x="1070" y="429" width="8" height="41"/><rect class="m2" x="1270" y="429" width="8" height="41"/>
+        <g id="idlers"></g>
+        <rect class="m2" x="1162" y="350" width="16" height="120"/>
+        <rect class="gd" x="1156" y="382" width="28" height="15" rx="2"/>
+        <rect class="gd" x="1156" y="419" width="28" height="12" rx="2"/>
+        <line id="beam" class="beam" x1="1170" y1="397" x2="1170" y2="419"/>
+
+        <!-- 9 edge trim + haul-off -->
+        <rect class="m2" x="1236" y="368" width="6" height="24"/>
+        <circle class="ch edge" cx="1240" cy="398" r="9"/>
+        <rect x="1290" y="370" width="40" height="100" fill="none" stroke="var(--machine-2)" stroke-width="4"/>
+        <g id="pull"></g>
+
+        <!-- 10 film -->
+        <rect class="m2" x="1352" y="340" width="6" height="130"/>
+        <path class="film" d="M1384 362 L1400 404"/><path class="film" d="M1382 446 L1400 412"/>
+        <circle cx="1372" cy="356" r="15" class="ch edge"/><circle cx="1372" cy="356" r="5" class="m2"/>
+        <circle cx="1372" cy="452" r="12" class="ch edge"/><circle cx="1372" cy="452" r="4" class="m2"/>
+        <circle cx="1400" cy="400" r="6" class="m2"/><circle cx="1400" cy="416" r="6" class="m2"/>
+
+        <!-- melt + sheet -->
+        <path class="meltline" d="M906 304 H952"/>
+        <ellipse class="meltf" cx="942" cy="304" rx="8" ry="5.5"/>
+        <path class="sheetline" d="M952 304 A26 26 0 0 1 952 356 A26 26 0 0 0 952 408 H1450"/>
+        <path id="sheetMarks" class="sheetmarks" d="M952 304 A26 26 0 0 1 952 356 A26 26 0 0 0 952 408 H1450"/>
+
+        <!-- 11 saw -->
+        <rect class="m2" x="1420" y="352" width="8" height="118"/><rect class="m2" x="1476" y="352" width="8" height="118"/>
+        <rect class="gd" x="1416" y="344" width="72" height="10"/>
+        <g id="saw">
+          <rect class="m2" x="1446" y="354" width="8" height="24"/>
+          <g id="blade"><circle cx="1450" cy="378" r="14" class="ch edge" stroke-dasharray="3 2.5"/><circle cx="1450" cy="378" r="4" class="m2"/></g>
+        </g>
+        <rect class="m2" x="1440" y="410" width="64" height="5"/>
+
+        <!-- 12 stacker -->
+        <rect class="m2" x="1590" y="340" width="6" height="130"/>
+        <rect class="gd" x="1488" y="336" width="108" height="8"/>
+        <rect id="rod" class="m2" x="1543" y="344" width="4" height="14"/>
+        <rect id="pad" class="m2" x="1520" y="357" width="50" height="5" rx="1"/>
+        <rect class="carton" x="1500" y="460" width="90" height="10"/>
+        <rect id="pile" class="sheetf" x="1504" y="442" width="82" height="18" opacity=".8"/>
+        <rect id="piece" class="sheetf" x="1450" y="406.5" width="40" height="3"/>
+
+        <!-- floor markings -->
+        <g class="floorlbl">
+          <text x="60" y="500">RESIN</text><text x="152" y="500">DRYER</text><text x="480" y="500">EXTRUDER</text>
+          <text x="826" y="500">PUMP · DIE</text><text x="952" y="500">CALENDER</text><text x="1170" y="500">COOLING · GAUGE</text>
+          <text x="1306" y="500">HAUL-OFF</text><text x="1374" y="500">FILM</text><text x="1452" y="500">SAW</text><text x="1545" y="500">STACKER</text>
+        </g>
+        <g id="pinsA"></g>
+      </svg>
+    </figure>
+  </section>
+
+  <div class="stations" id="chips" aria-label="Line stations"></div>
+
+  <div class="ops">
+    <article class="detail" aria-live="polite">
+      <div class="top"><div class="badge" id="dN">7</div><h3 id="dName">3-roll calender</h3></div>
+      <p class="role" id="dRole"></p>
+      <dl class="params" id="dParams"></dl>
+      <div class="watch"><h4>What goes wrong here</h4><ul id="dWatch"></ul></div>
+    </article>
+
+    <section class="hmi" aria-label="Simulated line readings">
+      <div class="hmi-head"><span>Line HMI · simulated</span><span id="hmiState" class="state">Running</span></div>
+      <div class="tiles">
+        <div class="tile"><span class="k">Dryer</span><span class="v" id="hDry">120 °C</span><span class="s" id="hDryS">–</span></div>
+        <div class="tile"><span class="k">Melt temperature</span><span class="v" id="hMelt">–</span><span class="s" id="hMeltS">–</span></div>
+        <div class="tile wide"><span class="k">Barrel zones · actual °C</span><div class="zones" id="hZones"></div></div>
+        <div class="tile"><span class="k">Melt pump in → out</span><span class="v" id="hPump">–</span><span class="s" id="hPumpS">–</span></div>
+        <div class="tile"><span class="k">Calender R1 / R2 / R3</span><span class="v" id="hRolls">–</span><span class="s">°C · oil-heated</span></div>
+        <div class="tile wide">
+          <span class="k">Thickness · gauge average across width</span>
+          <span class="v" id="hThk">–</span>
+          <svg class="spark" id="spark" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true"></svg>
+          <span class="s" id="hThkS">–</span>
+        </div>
+        <div class="tile"><span class="k">Cut cycle</span><span class="v" id="hCut">–</span><span class="s" id="hCutS">–</span></div>
+        <div class="tile"><span class="k">Pallet</span><span class="v" id="hPal">–</span><span class="s" id="hPalS">–</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section style="display:grid;gap:12px" aria-label="Plant layout">
+    <div class="sec-head">
+      <h2>Plant layout</h2>
+      <p>Top view of the same line in its hall, drawn to scale. The sheet runs left to right; edge trim drops into granulators and returns to the resin store as regrind.</p>
+    </div>
+    <figure class="fig" style="margin:0">
+      <svg id="planSvg" viewBox="0 0 1640 660" role="img" aria-labelledby="planT">
+        <title id="planT">Plan view of a PC sheet extrusion hall with silos, resin store, dryers, the line, control room, granulators and finished-goods warehouse</title>
+        <rect class="yard" width="1640" height="660"/>
+        <rect class="bldg" x="120" y="40" width="1480" height="580"/>
+        <!-- silos -->
+        <circle class="ch edge" cx="62" cy="150" r="34"/><circle class="ch edge" cx="62" cy="240" r="34"/>
+        <text class="svglbl mut" x="62" y="300" text-anchor="middle">Silos</text>
+        <text class="svgsm" x="62" y="318" text-anchor="middle">2 × 60 t</text>
+        <path class="tube" style="stroke-width:4" d="M96 150 H124 V214 H480 V200 M96 240 H124 V214"/>
+        <path id="planConvey" class="flowdash" style="stroke-width:1.8" d="M96 150 H124 V214 H480 V200 M96 240 H124 V214"/>
+        <!-- zones -->
+        <rect class="zone" x="140" y="60" width="230" height="140"/>
+        <g id="octabins"></g>
+        <text class="svglbl" x="152" y="190">Resin &amp; masterbatch store</text>
+        <rect class="zone" x="400" y="60" width="160" height="140"/>
+        <rect class="m" x="414" y="74" width="40" height="30" rx="2"/><rect class="m" x="462" y="74" width="40" height="30" rx="2"/>
+        <text class="svglbl" x="412" y="190">Dryers</text>
+        <path class="hose" style="stroke-width:3" d="M482 104 C490 150 492 250 492 312"/>
+        <rect class="zone" x="1300" y="60" width="150" height="140"/>
+        <text class="svglbl" x="1312" y="190">Film &amp; spares</text>
+        <circle class="ch edge" cx="1340" cy="104" r="18"/><circle class="ch edge" cx="1386" cy="104" r="18"/><circle class="ch edge" cx="1340" cy="146" r="14"/>
+        <rect class="zone" x="980" y="60" width="150" height="110"/>
+        <text class="svglbl" x="992" y="160">QC lab</text>
+        <rect class="zone" x="140" y="430" width="270" height="140"/>
+        <text class="svglbl" x="152" y="560">Die &amp; maintenance shop</text>
+        <rect class="st" x="160" y="456" width="140" height="30" rx="3"/><rect class="st" x="320" y="456" width="60" height="60" rx="3"/>
+        <rect class="zone" x="840" y="430" width="170" height="100"/>
+        <rect class="sheetf" x="840" y="427" width="170" height="6" opacity=".7"/>
+        <text class="svglbl" x="852" y="520">Control room</text>
+        <rect class="hmif" x="860" y="446" width="36" height="22" rx="2"/><rect class="hmif" x="904" y="446" width="36" height="22" rx="2"/><rect class="hmif" x="948" y="446" width="36" height="22" rx="2"/>
+        <rect class="zone" x="1280" y="430" width="300" height="170"/>
+        <g id="racks"></g>
+        <text class="svglbl" x="1292" y="590">Finished sheet warehouse</text>
+        <rect class="gd" x="1596" y="460" width="8" height="40"/><rect class="gd" x="1596" y="530" width="8" height="40"/>
+        <text class="svgsm" x="1588" y="452" text-anchor="end">Dock doors</text>
+        <!-- walkways -->
+        <path class="walk" d="M140 272 H1580"/><path class="walk" d="M140 398 H1580"/>
+        <text class="svgsm" x="620" y="418">Forklift aisle</text>
+        <!-- granulators + regrind -->
+        <rect class="m" x="1170" y="210" width="56" height="40" rx="3"/><text class="svgsm" x="1198" y="204" text-anchor="middle">Granulator</text>
+        <rect class="m" x="1170" y="414" width="56" height="40" rx="3"/><text class="svgsm" x="1198" y="470" text-anchor="middle">Granulator</text>
+        <path id="trimA" class="trim" d="M1192 309 C1196 280 1198 262 1198 250"/>
+        <path id="trimB" class="trim" d="M1192 351 C1196 380 1198 400 1198 414"/>
+        <path id="regA" class="regrind" d="M1170 230 H384 V200"/>
+        <path id="regB" class="regrind" d="M1170 434 H1060 V230"/>
+        <text class="svgsm" x="830" y="252">← Regrind back to the blend</text>
+        <!-- line -->
+        <rect class="m" x="400" y="308" width="64" height="44" rx="3"/>
+        <rect class="st" x="464" y="320" width="180" height="20"/>
+        <g id="planHeat"></g>
+        <circle class="ch edge" cx="492" cy="330" r="18"/>
+        <rect class="m2" x="580" y="314" width="12" height="10"/>
+        <rect class="m" x="590" y="234" width="30" height="24" rx="2"/>
+        <rect class="st" x="620" y="238" width="130" height="16"/>
+        <circle class="ch edge" cx="642" cy="246" r="9"/>
+        <path class="meltpipe" style="stroke-width:6" d="M750 246 H788 V318"/><path class="meltcore" style="stroke-width:2" d="M750 246 H788 V318"/>
+        <rect class="m2" x="644" y="312" width="26" height="36" rx="2"/>
+        <rect class="m" x="670" y="316" width="30" height="28" rx="2"/>
+        <rect class="st" x="700" y="324" width="80" height="12"/>
+        <rect class="st" x="780" y="318" width="16" height="24"/>
+        <polygon class="st edge" points="796,318 840,307 840,353 796,342"/>
+        <rect class="m2" x="846" y="294" width="60" height="8"/><rect class="m2" x="846" y="358" width="60" height="8"/>
+        <rect class="ch edge" x="850" y="302" width="14" height="56"/><rect class="ch edge" x="868" y="302" width="14" height="56"/><rect class="ch edge" x="886" y="302" width="14" height="56"/>
+        <g id="planRollers"></g>
+        <rect class="sheetf" x="900" y="309" width="550" height="42" opacity=".6"/>
+        <line id="planTicks" class="planticks" x1="900" y1="330" x2="1450" y2="330"/>
+        <rect x="1090" y="292" width="16" height="76" fill="none" stroke="var(--guard)" stroke-width="4"/>
+        <rect id="scanHead" class="gd" x="1086" y="325" width="24" height="10" rx="2"/>
+        <circle class="m2" cx="1192" cy="309" r="4"/><circle class="m2" cx="1192" cy="351" r="4"/>
+        <rect class="m2" x="1352" y="296" width="18" height="68" rx="2"/>
+        <rect class="ch edge" x="1378" y="298" width="12" height="64" rx="3"/>
+        <rect x="1420" y="290" width="28" height="80" fill="none" stroke="var(--guard)" stroke-width="4"/>
+        <rect id="planSaw" class="m2" x="1428" y="300" width="12" height="8"/>
+        <rect class="carton" x="1468" y="306" width="64" height="48"/>
+        <rect class="sheetf" x="1472" y="310" width="56" height="40" opacity=".7"/>
+        <!-- scale -->
+        <g>
+          <line class="rail" style="stroke:var(--ink)" x1="440" y1="600" x2="640" y2="600"/>
+          <line class="rail" style="stroke:var(--ink)" x1="440" y1="592" x2="440" y2="608"/><line class="rail" style="stroke:var(--ink)" x1="540" y1="594" x2="540" y2="606"/><line class="rail" style="stroke:var(--ink)" x1="640" y1="592" x2="640" y2="608"/>
+          <text class="svgsm" x="440" y="588" text-anchor="middle">0</text><text class="svgsm" x="540" y="588" text-anchor="middle">5</text><text class="svgsm" x="640" y="588" text-anchor="middle">10 m</text>
+          <text class="svgsm" x="660" y="604">Line length ≈ 56 m · hall 74 × 29 m</text>
+        </g>
+        <g id="pinsB"></g>
+      </svg>
+    </figure>
+  </section>
+
+  <section style="display:grid;gap:12px" aria-label="Close-ups">
+    <div class="sec-head">
+      <h2>Inside the machine</h2>
+      <p>Two cutaways of the parts that decide sheet quality: the vented screw that melts and degasses the resin, and the die and calender that set width, thickness and surface.</p>
+    </div>
+    <div class="duo">
+      <figure class="fig" style="margin:0">
+        <div class="card-head"><h3>Vented screw &amp; barrel profile</h3><p>Two-stage screw: the melt is decompressed under the vent so vacuum can draw off moisture and volatiles, then recompressed and metered to the melt pump.</p></div>
+        <svg id="screwSvg" viewBox="0 0 760 440" role="img" aria-labelledby="screwT">
+          <title id="screwT">Longitudinal section of a two-stage vented screw with heater zones, and the barrel temperature profile from zone 1 to the die</title>
+          <defs>
+            <linearGradient id="meltG2" x1="30" x2="730" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" style="stop-color:var(--pellet)"/><stop offset=".28" style="stop-color:var(--melt);stop-opacity:.5"/><stop offset=".55" style="stop-color:var(--melt);stop-opacity:.85"/><stop offset=".62" style="stop-color:var(--melt);stop-opacity:.45"/><stop offset="1" style="stop-color:var(--melt)"/>
+            </linearGradient>
+            <clipPath id="boreB"><rect x="30" y="72" width="700" height="46"/></clipPath>
+          </defs>
+          <text class="svgsm" x="30" y="22">Feed throat</text>
+          <rect class="m2" x="36" y="30" width="28" height="30"/>
+          <text class="svgsm" x="445" y="22" text-anchor="middle">Vent → vacuum</text>
+          <rect class="m2" x="430" y="30" width="30" height="30"/>
+          <rect class="st" x="30" y="60" width="700" height="70"/>
+          <rect x="30" y="72" width="700" height="46" fill="url(#meltG2)"/>
+          <g clip-path="url(#boreB)">
+            <polygon class="screw" points="30,86 220,86 330,80 410,80 425,88 480,88 560,78 730,78 730,112 560,112 480,102 425,102 410,110 330,110 220,104 30,104"/>
+            <g id="flightsB"></g>
+          </g>
+          <g id="bandsB"></g>
+          <g id="zoneBar"></g>
+          <g id="profile"></g>
+        </svg>
+      </figure>
+      <figure class="fig" style="margin:0">
+        <div class="card-head"><h3>Coat-hanger die &amp; calender nip</h3><p>The manifold spreads a round melt stream to full width. At the nip a small, even melt bank feeds the rolls, which set thickness and polish both faces.</p></div>
+        <svg id="dieSvg" viewBox="0 0 760 580" role="img" aria-labelledby="dieT">
+          <title id="dieT">Front view of a coat-hanger flat die with melt flow lines, and a side view of the die lips feeding the top calender nip</title>
+          <rect class="m2" x="360" y="22" width="40" height="22"/>
+          <text class="svgsm" x="410" y="36">Melt from feedblock</text>
+          <rect class="st edge" x="40" y="44" width="680" height="186" rx="4"/>
+          <path class="meltf" opacity=".3" d="M70 124 L380 64 L690 124 V176 H70 Z"/>
+          <path class="meltf" d="M380 52 L70 112 V124 L380 64 L690 124 V112 Z"/>
+          <g id="flowLines"></g>
+          <rect class="m2" x="70" y="176" width="620" height="8"/>
+          <rect class="meltf" opacity=".55" x="70" y="184" width="620" height="14"/>
+          <rect class="meltf" x="70" y="198" width="620" height="6"/>
+          <g id="bolts"></g>
+          <text class="svglbl" x="84" y="96">Coat-hanger manifold</text>
+          <text class="svglbl" x="380" y="154" text-anchor="middle">Preland evens out flow across the width</text>
+          <text class="svgsm" x="380" y="252" text-anchor="middle">Choker bar · flexible lip · thermal die bolts at ~25 mm pitch</text>
+          <!-- nip -->
+          <g transform="translate(0 56)">
+          <path class="st edge" d="M120 330 H300 L360 368 V376 L300 414 H120 Z"/>
+          <rect class="hot" x="150" y="340" width="120" height="6" rx="3"/><rect class="hot" x="150" y="398" width="120" height="6" rx="3"/>
+          <text class="svgsm" x="130" y="320">Die lips · 280 °C</text>
+          <g id="rollsB"></g>
+          <path class="meltline" style="stroke-width:6" d="M360 372 H440"/>
+          <ellipse class="meltf" cx="418" cy="372" rx="17" ry="11"/>
+          <path class="sheetline" style="stroke-width:6" d="M440 372 A72 72 0 0 1 512 444 A72 72 0 0 1 491 495"/>
+          <path id="nipMarks" class="sheetmarks" d="M440 372 A72 72 0 0 1 512 444 A72 72 0 0 1 491 495"/>
+          <line class="leader" x1="300" y1="455" x2="410" y2="380"/>
+          <text class="svgsm" x="120" y="470">Melt bank: small, even bead</text>
+          <line class="leader" x1="560" y1="372" x2="452" y2="372"/>
+          <text class="svgsm" x="566" y="376">Nip gap ≈ sheet thickness</text>
+          <text class="svgsm" x="530" y="268">R1 · 125 °C</text>
+          <text class="svgsm" x="560" y="470">R2 · 138 °C</text>
+          </g>
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <div class="notes">
+    <p>All figures are typical for a 2.1 m PC solid-sheet line and are given for orientation, not as setpoints. Confirm drying and melt temperatures with the resin datasheet and the line maker's manual. Output assumes 1.20 g/cm³ density, 2.05 m net width plus edge trim, and a line capped at about 1,400 kg/h.</p>
+    <p>Downstream handling (masking removal, pre-drying finished sheet at 120 °C for about 2 h per mm, not exceeding 125 °C) follows the SABIC LEXAN Sheet Processing Guide (SFS-6212, Nov 2015) in this repository.</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  const NET = 2.05, GROSS = 2.15, RHO = 1.2, MAXKG = 1400, CUT = 3.05, HOPPER = 4500, SPEC = 18, PALLET_KG = 1500;
+  const ZSET = [245, 260, 275, 285, 285, 290, 290];
+  const S = { running: !reduce, thick: 3, speed: 2.4, sel: 7, pile: 6, p: 0.3, t: 0, dp: 22, hist: [], palletSheets: 14 };
+  const calc = () => {
+    const gross = S.speed * 60 * GROSS * S.thick * RHO;
+    const wt = NET * CUT * S.thick * RHO;
+    return { gross, net: S.speed * 60 * NET * S.thick * RHO, rpm: gross / SPEC, sph: S.speed * 60 / CUT, cycle: CUT / S.speed * 60, resid: HOPPER / gross, wt, perPallet: Math.floor(PALLET_KG / wt) };
+  };
+  const maxSpeed = th => Math.min(10, MAXKG / (60 * GROSS * th * RHO));
+  const f0 = n => Math.round(n).toLocaleString('en-US');
+  const ease = q => q < .5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+
+  const STATIONS = [
+    { n: 1, name: 'Resin supply & conveying', a: [60, 372], b: [255, 60],
+      role: 'Polycarbonate pellets arrive by bulk truck into outdoor silos or in 1 t octabins. A vacuum conveying system pulls them through closed lines to the loader on top of the drying hopper and blends in regrind made from the line\'s own edge trim.',
+      params: [['Bulk density', '≈ 0.7 kg/L'], ['Regrind share', '10–20 %, same grade, clean'], ['Conveying', 'Vacuum, closed lines, filtered'], ['Resin demand now', c => f0(c.gross) + ' kg/h']],
+      watch: ['Dust, fines and foreign pellets show up later as black specks and gels.', 'Keep bins closed. PC starts taking up moisture as soon as it meets plant air.'] },
+    { n: 2, name: 'Dehumidifying dryer', a: [152, 408], b: [480, 60],
+      role: 'PC is hygroscopic and hydrolyses in the melt if it carries water. A desiccant dryer blows hot, very dry air up through the hopper so the pellets reach the feed throat almost bone dry.',
+      params: [['Air temperature', '120 °C'], ['Dew point', '≤ −40 °C'], ['Residence time', '3–4 h'], ['Residual moisture', '< 0.02 %'], ['Hopper 4.5 t → residence', c => c.resid.toFixed(1) + ' h']],
+      watch: ['Wet resin gives splay (silver streaks), bubbles and brittle sheet from molecular-weight loss.', 'Raising line output shortens residence time in the hopper. Keep it above 3 h.', 'Finished sheet picks moisture up again. Before thermoforming, the LEXAN guide asks for 2 h per mm at 120 °C.'] },
+    { n: 3, name: 'Main extruder', a: [470, 262], b: [560, 300],
+      role: 'A single-screw extruder melts, mixes and pumps the dried resin. PC sheet lines usually run a two-stage vented screw: the melt is decompressed under the vent so vacuum can pull out residual moisture and volatiles.',
+      params: [['Screw', 'Ø 120–150 mm, L/D 33–36'], ['Barrel zones', '245–290 °C (7 zones)'], ['Melt temperature', '280–300 °C'], ['Vent vacuum', '30–50 mbar abs'], ['Screw speed now', c => Math.round(c.rpm) + ' rpm']],
+      watch: ['Melt above ~310 °C yellows the sheet and degrades the resin.', 'Melt rising into the vent (vent flooding) means the second stage cannot keep up. Lower rpm or adjust the zone profile.'] },
+    { n: 4, name: 'UV co-extruder', a: [690, 180], b: [690, 222],
+      role: 'A small satellite extruder melts PC compounded with a UV absorber. The feedblock lays it as a thin cap on one or both faces, so the sheet can face sunlight for years without yellowing.',
+      params: [['Screw', 'Ø 45–75 mm'], ['Cap layer', '30–60 µm'], ['Share of output', '2–5 %'], ['Melt temperature', 'Within ±10 °C of main layer']],
+      watch: ['A viscosity mismatch between layers causes interface waviness.', 'The masking film on the UV face is printed so installers know which side faces out.'] },
+    { n: 5, name: 'Screen changer & melt pump', a: [812, 258], b: [672, 372],
+      role: 'A continuous screen changer filters out gels and contaminants without stopping the line. The gear pump after it delivers a fixed volume per turn, isolating the die from screw surges so thickness stays steady.',
+      params: [['Filtration', '75–125 µm screens'], ['Pump inlet', '60–100 bar'], ['Pump outlet', '150–250 bar'], ['Output stability', '±0.5 %']],
+      watch: ['Rising pressure drop across the screen means it is clogging. Index the screen.', 'Low pump inlet pressure starves the pump and makes thickness pulse.'] },
+    { n: 6, name: 'Feedblock & flat die', a: [878, 244], b: [818, 288],
+      role: 'The feedblock joins the main and UV layers. A coat-hanger die then spreads the melt from a round channel into an even curtain about 2.2 m wide.',
+      params: [['Die width', '≈ 2.2–2.4 m for 2.05 m net'], ['Die temperature', '270–290 °C'], ['Lip opening', 'Slightly above final thickness'], ['Profile control', 'Thermal die bolts, ~25 mm pitch']],
+      watch: ['Die lines come from degraded material or nicks on the lip.', 'Thick or thin lanes across the width are corrected bolt by bolt, usually in closed loop with the gauge.'] },
+    { n: 7, name: '3-roll calender', a: [952, 222], b: [876, 384],
+      role: 'Three chrome-plated, mirror-polished rolls take the curtain at the top nip, set the thickness and polish both faces. The sheet wraps the middle and bottom rolls as it cools below its glass transition at about 145 °C.',
+      params: [['Roll diameter', '400–600 mm'], ['R1 / R2 / R3', '≈ 125 / 138 / 130 °C'], ['Heating', 'Thermal oil, one TCU per roll'], ['Melt bank', 'Pencil-thin, even across width']],
+      watch: ['Too big a bank traps air and leaves chatter marks; too small gives thin spots and dull surface.', 'Rolls run too cold freeze in stress, which shows up later as warp and shrinkage when the sheet is thermoformed.'] },
+    { n: 8, name: 'Cooling conveyor & gauge', a: [1170, 334], b: [1098, 280],
+      role: 'Idler rollers carry the sheet so it cools evenly to near room temperature. A traversing gauge scans thickness across the full width and feeds the die-bolt control.',
+      params: [['Conveyor length', '15–25 m'], ['Exit temperature', '< 60 °C'], ['Gauge', 'X-ray or beta, traversing O-frame'], ['Thickness tolerance', '±5 % typical']],
+      watch: ['Uneven cooling across the width bows the sheet.', 'Check the gauge against micrometer readings on samples every shift.'] },
+    { n: 9, name: 'Edge trim & haul-off', a: [1310, 352], b: [1361, 280],
+      role: 'Rotary knives cut off the thick bead at each edge. Rubber-covered pull rolls draw the sheet at a speed matched to the calender so it is neither stretched nor buckled. The trim goes to granulators and comes back as regrind.',
+      params: [['Trim per edge', '40–60 mm'], ['Haul-off / calender ratio', '0.99–1.01'], ['Line speed now', () => S.speed.toFixed(2) + ' m/min']],
+      watch: ['Too much draw stretches the sheet and builds in orientation stress.', 'Ragged trim edges point to dull knives.'] },
+    { n: 10, name: 'Protective film', a: [1372, 318], b: [1384, 384],
+      role: 'PE masking film is laminated onto both faces to protect the polished surface through cutting, storage and fabrication.',
+      params: [['Film', 'Co-extruded PE, 50–80 µm'], ['Printed side', 'Marks the UV-protected face'], ['Sheet temperature', '< 60 °C at lamination']],
+      watch: ['Laminating onto warm sheet makes the film bond too hard to peel later.', 'Fabricators must remove the masking before pre-drying or thermoforming.'] },
+    { n: 11, name: 'Cross-cut saw', a: [1450, 324], b: [1434, 276],
+      role: 'A flying saw cuts the sheet to length. The carriage travels with the sheet during the cut so the edge comes out square without stopping the line.',
+      params: [['Standard length', '3050 mm'], ['Cut every', c => Math.round(c.cycle) + ' s'], ['Sheet weight', c => c.wt.toFixed(1) + ' kg'], ['Dust', 'Extraction at the blade']],
+      watch: ['Chips left on the surface get trapped under the film.', 'Notched or cracked edges become crack starters in service.'] },
+    { n: 12, name: 'Stacker', a: [1560, 318], b: [1501, 384],
+      role: 'A vacuum lifter lays each sheet on the pallet. Full pallets are labelled with grade, thickness, UV side and batch, then go to the finished-goods warehouse.',
+      params: [['Sheets per hour', c => c.sph.toFixed(1)], ['Sheets per 1.5 t pallet', c => String(c.perPallet)], ['Pallet full every', c => (c.perPallet / c.sph).toFixed(1) + ' h']],
+      watch: ['Stack flat and under cover to avoid bowed sheet.', 'Missing batch labels break traceability when a customer reports a defect.'] }
+  ];
+
+  /* ---------- build static repeats ---------- */
+  const flights = $('flights');
+  for (let x = 336; x <= 780; x += 16) el('line', { class: 'flight', x1: x, y1: 290, x2: x + 7, y2: 316 }, flights);
+  const heaterEls = [];
+  [382, 428, 474, 520, 610, 656, 702].forEach((x, i) => {
+    const g = el('g', {}, $('heaters'));
+    el('rect', { class: 'hot', x, y: 280, width: 40, height: 8, rx: 1 }, g);
+    el('rect', { class: 'hot', x, y: 318, width: 40, height: 8, rx: 1 }, g);
+    el('rect', { class: 'm2', x: x + 6, y: 326, width: 28, height: 12, rx: 1 }, $('heaters'));
+    heaterEls.push({ g, w: 0.5 + i * 0.13, ph: i * 1.7 });
+  });
+  [600, 636, 672, 708, 744].forEach(x => el('rect', { class: 'hot', x, y: 197, width: 24, height: 24, rx: 1, opacity: .85 }, $('heatersB')));
+
+  const gear = el('g', {}, $('gear'));
+  el('circle', { class: 'm2', cx: 812, cy: 303, r: 12 }, gear);
+  for (let i = 0; i < 10; i++) el('rect', { class: 'm2', x: 809.5, y: 287, width: 5, height: 6, transform: `rotate(${i * 36} 812 303)` }, gear);
+  el('circle', { class: 'ch', cx: 812, cy: 303, r: 4 }, gear);
+
+  const mkRoll = (parent, cx, cy, r) => {
+    const g = el('g', {}, parent);
+    el('circle', { class: 'ch edge', cx, cy, r }, g);
+    el('circle', { fill: 'none', stroke: 'var(--machine-2)', 'stroke-width': 1, opacity: .5, cx, cy, r: r * .72 }, g);
+    for (let i = 0; i < 3; i++) el('line', { stroke: 'var(--machine-2)', 'stroke-width': 2, x1: cx, y1: cy, x2: cx, y2: cy - r * .8, transform: `rotate(${i * 120} ${cx} ${cy})` }, g);
+    el('circle', { class: 'm2', cx, cy, r: r * .22 }, g);
+    return { g, cx, cy };
+  };
+  const rolls = [mkRoll($('rolls'), 952, 278, 26), mkRoll($('rolls'), 952, 330, 26), mkRoll($('rolls'), 952, 382, 26)];
+  const pull = [mkRoll($('pull'), 1310, 393, 14), mkRoll($('pull'), 1310, 423, 14)];
+  for (let x = 1010; x <= 1290; x += 20) { if (x === 1170) continue; el('circle', { class: 'ch edge', cx: x, cy: 415, r: 6 }, $('idlers')); }
+
+  // plan repeats
+  for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) el('rect', { class: 'carton', x: 154 + i * 34, y: 72 + j * 30, width: 24, height: 24, rx: 1 }, $('octabins'));
+  for (let x = 912; x <= 1340; x += 20) el('line', { class: 'rail', x1: x, y1: 300, x2: x, y2: 360 }, $('planRollers'));
+  for (let x = 476; x <= 630; x += 24) { if (x > 570 && x < 600) continue; el('rect', { class: 'hot', x, y: 317, width: 16, height: 26, rx: 1, opacity: .8 }, $('planHeat')); }
+  for (let r = 0; r < 4; r++) el('rect', { class: 'st', x: 1296, y: 446 + r * 30, width: 268, height: 14, rx: 1, opacity: .7 }, $('racks'));
+
+  // screw close-up
+  for (let x = 8; x <= 760; x += 28) el('line', { class: 'flight', 'stroke-width': 4.5, x1: x, y1: 72, x2: x + 12, y2: 118 }, $('flightsB'));
+  const zb = [[30, 130], [130, 230], [230, 330], [330, 415], [475, 560], [560, 645], [645, 730]];
+  zb.forEach(([a, b], i) => {
+    el('rect', { class: 'hot', x: a + 4, y: 52, width: b - a - 8, height: 8, rx: 1 }, $('bandsB'));
+    el('rect', { class: 'hot', x: a + 4, y: 130, width: b - a - 8, height: 8, rx: 1 }, $('bandsB'));
+    const t = el('text', { class: 'svgsm', x: (a + b) / 2, y: 49, 'text-anchor': 'middle' }, $('bandsB')); t.textContent = 'Z' + (i + 1);
+  });
+  // move Z labels clear of throat/vent text: shift Z1 label right
+  const sec = [['Feed', 30, 220], ['Compression', 220, 330], ['Metering 1', 330, 410], ['Vent', 410, 480], ['Compr. 2', 480, 560], ['Metering 2', 560, 730]];
+  sec.forEach(([name, a, b], i) => {
+    el('rect', { class: 'zoneband' + (i % 2 ? ' alt' : ''), x: a, y: 150, width: b - a, height: 22 }, $('zoneBar'));
+    const t = el('text', { class: 'svgsm', x: (a + b) / 2, y: 165, 'text-anchor': 'middle', style: 'fill:var(--ink)' }, $('zoneBar')); t.textContent = name;
+  });
+  // temperature profile chart: 220 °C → y 400, 320 °C → y 210
+  const pts = [['Z1', 245], ['Z2', 260], ['Z3', 275], ['Z4', 285], ['Z5', 285], ['Z6', 290], ['Z7', 290], ['Screen', 290], ['Pump', 285], ['Die', 280]];
+  const yOf = v => 400 - (v - 220) * 1.9, xOf = i => 80 + i * 68;
+  const pr = $('profile');
+  [220, 240, 260, 280, 300, 320].forEach(v => {
+    el('line', { class: 'axis', x1: 60, y1: yOf(v), x2: 730, y2: yOf(v) }, pr);
+    const t = el('text', { class: 'svgsm', x: 52, y: yOf(v) + 4, 'text-anchor': 'end' }, pr); t.textContent = v;
+  });
+  const tU = el('text', { class: 'svgsm', x: 60, y: 200 }, pr); tU.textContent = 'Setpoint °C';
+  el('line', { class: 'limit', x1: 60, y1: yOf(310), x2: 730, y2: yOf(310) }, pr);
+  const tl = el('text', { class: 'svgsm', x: 728, y: yOf(310) - 6, 'text-anchor': 'end', style: 'fill:var(--hot)' }, pr); tl.textContent = 'Yellowing risk above ~310 °C';
+  el('path', { class: 'prof', d: pts.map((p, i) => (i ? 'L' : 'M') + xOf(i) + ' ' + yOf(p[1])).join(' ') }, pr);
+  pts.forEach((p, i) => {
+    el('circle', { class: 'profdot', cx: xOf(i), cy: yOf(p[1]), r: 4.5 }, pr);
+    const v = el('text', { class: 'svgsm', x: xOf(i), y: yOf(p[1]) - 10, 'text-anchor': 'middle', style: 'fill:var(--ink)' }, pr); v.textContent = p[1];
+    const l = el('text', { class: 'svgsm', x: xOf(i), y: 422, 'text-anchor': 'middle' }, pr); l.textContent = p[0];
+  });
+
+  // die close-up
+  for (let x = 90; x <= 670; x += 58) el('path', { class: 'flow', d: `M380 64 L${x} 196` }, $('flowLines'));
+  for (let x = 76; x <= 684; x += 24) el('rect', { class: 'm2', x, y: 208, width: 6, height: 16, rx: 1 }, $('bolts'));
+  const rollsB = [mkRoll($('rollsB'), 440, 300, 72), mkRoll($('rollsB'), 440, 444, 72)];
+
+  /* ---------- pins + chips + detail ---------- */
+  const pinEls = [];
+  const buildPins = (group, key) => STATIONS.forEach(s => {
+    const g = el('g', { class: 'pin', tabindex: 0, role: 'button', 'aria-label': `${s.n}. ${s.name}`, transform: `translate(${s[key][0]} ${s[key][1]})` }, group);
+    el('circle', { r: 13 }, g);
+    el('text', {}, g).textContent = s.n;
+    g.addEventListener('click', () => select(s.n));
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(s.n); } });
+    pinEls.push([s.n, g]);
+  });
+  buildPins($('pinsA'), 'a'); buildPins($('pinsB'), 'b');
+  const chips = $('chips');
+  const chipEls = STATIONS.map(s => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.innerHTML = `<span class="n">${s.n}</span><span>${s.name}</span>`;
+    b.addEventListener('click', () => select(s.n));
+    chips.appendChild(b); return [s.n, b];
+  });
+  function renderDetail() {
+    const s = STATIONS[S.sel - 1], c = calc();
+    $('dN').textContent = s.n; $('dName').textContent = s.name; $('dRole').textContent = s.role;
+    $('dParams').innerHTML = s.params.map(([k, v]) => `<div><dt>${k}</dt><dd>${typeof v === 'function' ? v(c) : v}</dd></div>`).join('');
+    $('dWatch').innerHTML = s.watch.map(w => `<li>${w}</li>`).join('');
+  }
+  function select(n) {
+    S.sel = n;
+    pinEls.forEach(([k, g]) => g.classList.toggle('on', k === n));
+    chipEls.forEach(([k, b]) => b.setAttribute('aria-pressed', String(k === n)));
+    renderDetail();
+  }
+
+  /* ---------- controls ---------- */
+  const speed = $('speed'), thick = $('thick'), run = $('run');
+  function syncControls() {
+    const mx = maxSpeed(S.thick);
+    speed.max = mx.toFixed(2);
+    if (S.speed > mx) S.speed = Math.floor(mx * 20) / 20;
+    speed.value = S.speed;
+    $('speedOut').textContent = S.speed.toFixed(2) + ' m/min';
+    const c = calc();
+    $('kOut').textContent = f0(c.net) + ' kg/h';
+    $('kSheets').textContent = c.sph.toFixed(1) + ' /h';
+    $('kRpm').textContent = Math.round(c.rpm) + ' rpm';
+    renderDetail(); renderHMI(false);
+  }
+  speed.addEventListener('input', () => { S.speed = parseFloat(speed.value); syncControls(); });
+  thick.addEventListener('change', () => { S.thick = parseFloat(thick.value); S.hist = []; seedHist(); syncControls(); });
+  function setRun(on) {
+    S.running = on; run.setAttribute('aria-pressed', String(on));
+    $('runTxt').textContent = on ? 'Pause line' : 'Run line';
+    const st = $('hmiState'); st.textContent = on ? 'Running' : 'Paused'; st.classList.toggle('paused', !on);
+  }
+  run.addEventListener('click', () => setRun(!S.running));
+
+  /* ---------- HMI ---------- */
+  const zoneBox = $('hZones');
+  const zoneCells = ZSET.map((sp, i) => {
+    const d = document.createElement('div'); d.innerHTML = `<i>Z${i + 1}</i><b>${sp}</b><span class="bar"></span>`; zoneBox.appendChild(d); return d;
+  });
+  const jit = a => (Math.random() - .5) * 2 * a;
+  const thkSample = () => S.thick * (1 + 0.011 * Math.sin(S.t * 0.35) + jit(0.007));
+  function seedHist() { for (let i = 0; i < 60; i++) S.hist.push(S.thick * (1 + 0.011 * Math.sin(i * 0.3) + jit(0.007))); }
+  function renderHMI(tick) {
+    const c = calc();
+    const j = tick ? 1 : 0;
+    $('hDry').textContent = (120 + jit(.6) * j).toFixed(1) + ' °C';
+    const dryS = $('hDryS');
+    dryS.textContent = `Dew pt ${(-42 + jit(1.2) * j).toFixed(0).replace('-', '−')} °C · ${c.resid.toFixed(1)} h in hopper`;
+    dryS.classList.toggle('warn', c.resid < 3);
+    if (c.resid < 3) dryS.textContent += ' · too short';
+    const melt = 286 + (c.rpm - 55) * 0.3 + jit(.8) * j;
+    $('hMelt').textContent = melt.toFixed(0) + ' °C';
+    $('hMelt').classList.toggle('warn', melt > 305);
+    $('hMeltS').textContent = `${Math.round(c.rpm)} rpm · vent ${(38 + jit(3) * j).toFixed(0)} mbar abs`;
+    zoneCells.forEach((d, i) => {
+      const v = ZSET[i] + jit(1.4) * j;
+      d.querySelector('b').textContent = v.toFixed(0);
+      d.querySelector('.bar').style.opacity = (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(S.t * heaterEls[i].w + heaterEls[i].ph))).toFixed(2);
+    });
+    const pin = 85 + jit(3) * j, pout = 150 + c.gross / 25 + jit(4) * j;
+    $('hPump').textContent = `${pin.toFixed(0)} → ${pout.toFixed(0)} bar`;
+    const pS = $('hPumpS');
+    pS.textContent = `Screen Δp ${S.dp.toFixed(0)} bar` + (S.dp > 45 ? ' · index screen' : '');
+    pS.classList.toggle('warn', S.dp > 45);
+    $('hRolls').textContent = `${(125 + jit(.5) * j).toFixed(0)} / ${(138 + jit(.5) * j).toFixed(0)} / ${(130 + jit(.5) * j).toFixed(0)}`;
+    if (tick) { S.hist.push(thkSample()); if (S.hist.length > 60) S.hist.shift(); }
+    const last = S.hist[S.hist.length - 1];
+    $('hThk').textContent = last.toFixed(S.thick < 4 ? 3 : 2) + ' mm';
+    $('hThkS').textContent = `Target ${S.thick.toFixed(2)} mm · band ±5 % · last 60 scans`;
+    drawSpark();
+    $('hCut').textContent = Math.round(c.cycle) + ' s';
+    $('hCutS').textContent = `${c.sph.toFixed(1)} sheets/h · ${c.wt.toFixed(1)} kg each`;
+    $('hPal').textContent = `${S.palletSheets} / ${c.perPallet}`;
+    $('hPalS').textContent = `Full every ${(c.perPallet / c.sph).toFixed(1)} h`;
+  }
+  function drawSpark() {
+    const sv = $('spark'), T = S.thick, lo = T * 0.92, hi = T * 1.08;
+    const y = v => 64 - (v - lo) / (hi - lo) * 64;
+    const n = S.hist.length, x = i => i / 59 * 314 + 2;
+    const d = S.hist.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+    sv.innerHTML = `<rect class="band" x="0" y="${y(T * 1.05)}" width="320" height="${y(T * .95) - y(T * 1.05)}"/>` +
+      `<line class="tgt" x1="0" x2="320" y1="${y(T)}" y2="${y(T)}"/>` +
+      `<path class="ln" d="${d}"/><circle class="dot" cx="${x(n - 1)}" cy="${y(S.hist[n - 1])}" r="2.6"/>` +
+      `<text x="4" y="${y(T * 1.05) - 2}">+5 %</text><text x="4" y="${y(T * .95) + 10}">−5 %</text>`;
+  }
+  setInterval(() => {
+    if (!S.running) return;
+    S.dp += 0.15; if (S.dp > 50) S.dp = 18;
+    renderHMI(true);
+  }, 900);
+
+  /* ---------- animation ---------- */
+  const off = { sheet: 0, roll: 0, screw: 0, gear: 0, convey: 0, pel: 0, flow: 0, blade: 0 };
+  const sheetMarks = $('sheetMarks'), nipMarks = $('nipMarks'), convey = $('convey'), planConvey = $('planConvey');
+  const pelPat = $('pelPat'), beam = $('beam'), saw = $('saw'), blade = $('blade'), piece = $('piece'), pile = $('pile'), pad = $('pad'), rod = $('rod');
+  const planTicks = $('planTicks'), scanHead = $('scanHead'), planSaw = $('planSaw');
+  const trims = [$('trimA'), $('trimB')], regs = [$('regA'), $('regB')];
+  const flowLines = [...$('flowLines').children], flightsB = $('flightsB');
+
+  function paint() {
+    const c = calc();
+    sheetMarks.style.strokeDashoffset = off.sheet;
+    nipMarks.style.strokeDashoffset = off.sheet * 1.6;
+    planTicks.style.strokeDashoffset = off.sheet * 0.6;
+    convey.style.strokeDashoffset = off.convey; planConvey.style.strokeDashoffset = off.convey * .6;
+    trims.forEach(t => t.style.strokeDashoffset = off.sheet * .5);
+    regs.forEach(t => t.style.strokeDashoffset = -off.convey * .4);
+    flowLines.forEach(f => f.style.strokeDashoffset = off.flow);
+    pelPat.setAttribute('patternTransform', `translate(0 ${(off.pel % 12).toFixed(2)})`);
+    flights.setAttribute('transform', `translate(${(off.screw % 16).toFixed(2)} 0)`);
+    flightsB.setAttribute('transform', `translate(${(off.screw * 1.4 % 28).toFixed(2)} 0)`);
+    gear.setAttribute('transform', `rotate(${off.gear % 360} 812 303)`);
+    const a = off.roll % 360;
+    rolls[0].g.setAttribute('transform', `rotate(${-a} 952 278)`);
+    rolls[1].g.setAttribute('transform', `rotate(${a} 952 330)`);
+    rolls[2].g.setAttribute('transform', `rotate(${-a} 952 382)`);
+    pull[0].g.setAttribute('transform', `rotate(${-a * 1.85} 1310 393)`);
+    pull[1].g.setAttribute('transform', `rotate(${a * 1.85} 1310 423)`);
+    rollsB[0].g.setAttribute('transform', `rotate(${-a * .36} 440 300)`);
+    rollsB[1].g.setAttribute('transform', `rotate(${a * .36} 440 444)`);
+    heaterEls.forEach(h => h.g.setAttribute('opacity', (0.45 + 0.55 * Math.max(0, Math.sin(S.t * h.w + h.ph))).toFixed(2)));
+    beam.setAttribute('opacity', Math.sin(S.t * 9) > 0 ? 1 : .25);
+    scanHead.setAttribute('y', (325 + Math.sin(S.t * 0.9) * 16).toFixed(1));
+
+    // cut cycle
+    const p = S.p, top = 460 - S.pile * 3;
+    let px = 1450, pw = 82, py = 406.5, sx = 0, sy = 0, cutting = false;
+    if (p < .55) pw = Math.max(1, 82 * p / .55);
+    else if (p < .68) { const q = (p - .55) / .13; sy = Math.sin(q * Math.PI) * 18; sx = q * 8; cutting = true; }
+    else if (p < .85) px = 1450 + 54 * ease((p - .68) / .17);
+    else { px = 1504; py = 406.5 + (top - 3 - 406.5) * ease((p - .85) / .15); }
+    piece.setAttribute('x', px.toFixed(1)); piece.setAttribute('width', pw.toFixed(1)); piece.setAttribute('y', py.toFixed(1));
+    saw.setAttribute('transform', `translate(${sx.toFixed(1)} ${sy.toFixed(1)})`);
+    blade.setAttribute('transform', `rotate(${off.blade % 360} 1450 378)`);
+    off.bladeFast = cutting;
+    planSaw.setAttribute('y', (cutting ? 302 + ((p - .55) / .13) * 50 : 300).toFixed(1));
+    pile.setAttribute('y', top); pile.setAttribute('height', S.pile * 3);
+    let padB;
+    if (p < .15) padB = top + (362 - top) * ease(p / .15);
+    else if (p < .72) padB = 362;
+    else if (p < .85) padB = 362 + (406.5 - 362) * ease((p - .72) / .13);
+    else padB = py;
+    pad.setAttribute('y', (padB - 5).toFixed(1));
+    rod.setAttribute('height', Math.max(2, padB - 5 - 344).toFixed(1));
+  }
+
+  function step(dt) {
+    const c = calc(); S.t += dt;
+    const vis = Math.max(2.5, Math.min(14, c.cycle / 12));
+    const v = 82 / vis;
+    off.sheet -= v * dt;
+    off.roll += v / 26 * dt * 57.3;
+    off.screw += c.rpm * .35 * dt;
+    off.gear += c.rpm * 3 * dt;
+    off.convey -= c.gross / 45 * dt;
+    off.pel += c.gross / 500 * dt;
+    off.flow -= c.gross / 60 * dt;
+    off.blade += (off.bladeFast ? 1100 : 240) * dt;
+    S.p += dt / vis;
+    if (S.p >= 1) {
+      S.p -= 1; S.pile = S.pile >= 16 ? 0 : S.pile + 1;
+      S.palletSheets = S.palletSheets + 1 >= c.perPallet ? 0 : S.palletSheets + 1;
+    }
+    paint();
+  }
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (S.running && !document.hidden) step(dt);
+    requestAnimationFrame(frame);
+  }
+
+  seedHist();
+  setRun(S.running);
+  select(S.sel);
+  syncControls();
+  paint();
+  requestAnimationFrame(frame);
+})();
+</script>

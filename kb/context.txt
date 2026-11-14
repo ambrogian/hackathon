@@ -1,0 +1,145 @@
+LINE: Polycarbonate (PC) solid sheet extrusion line
+ZONES (in flow order):
+Z1: Resin drying and feeding - dehumidifying dryer, drying hopper, gravimetric dosing / blender, regrind feed
+Z2: Main extruder - feed throat, barrel heating/cooling zones, screw, vacuum vent (degassing port) and vacuum pump, thermocouples
+Z3: Melt filtration - screen changer, screen pack, pressure transducers before/after screen
+Z4: Gear pump (melt pump) - gear pump, inlet pressure control loop, outlet pressure transducer
+Z5: UV co-extruder and feedblock - co-extruder, co-extruder hopper / dosing, feedblock
+Z6: Flat sheet die - die body heating zones, flexible lip and lip adjustment bolts, choker bar, die lips
+Z7: Polishing roll stack (3-roll calender) - roll 1/2/3, temperature control units (TCUs) per roll, nip gap and gap parallelism, roll drives, gearboxes, bearings, melt bank in the first nip
+Z8: Cooling conveyor (roller table) - idler rollers, ambient cooling / fans
+Z9: Edge trim - edge-trim knives, edge-trim chopper / granulator
+Z10: Protective film laminator - film unwinds (top/bottom), film tension control, laminating nip rolls
+Z11: Haul-off (pull rolls) - rubber-covered pull rolls, haul-off drive, speed ratio to roll stack
+Z12: Cross-cut saw and stacker - cross-cut saw or guillotine, blade, stacker
+SAFETY:
+- Barrel, adapter and die run at about 300 °C and molten PC causes severe burns: heat-resistant gloves, sleeves and face shield for any work at Z2-Z6.
+- Never reach into the roll stack nip (Z7), the laminator nip (Z10) or the haul-off (Z11) while running. These are crushing and draw-in points.
+- Die lip cleaning while running only with brass tools, only if your plant procedure allows it, and only by trained operators. Never use steel tools on die lips or polishing rolls.
+- Screen changes and any opening of the melt path follow the plant procedure: melt under pressure can spray.
+- Saw (Z12) and edge-trim knives (Z9): lockout/tagout before touching blades.
+- If in doubt, stop and call the shift lead or maintenance. The assistant gives guidance; it does not replace plant procedures.
+TRIAGE BY VISUAL PATTERN:
+- continuous straight lines along the sheet (machine direction), fixed position -> die_lines, roll_scratches_marks
+- regular evenly spaced lines across the width (transverse) -> chatter_marks, thickness_surging_md, sticking_to_rolls
+- random spots or particles in the sheet -> moisture_bubbles_splay, black_specks, gels_unmelts_contamination
+- whole-surface color or appearance change -> yellowing_degradation, dull_surface_orange_peel
+- wavy, V-shaped or irregular moving marks -> flow_lines_bank_marks
+- sheet not flat -> warp_bow_stress
+- thickness or optics differ across the width -> thickness_variation_cd
+- damage at edges or at cut -> edge_and_cut_cracks
+- problems with the masking film -> protective_film_defects
+- not visible in a normal photo -> uv_layer_defects
+DEFECTS:
+[moisture_bubbles_splay] Bubbles, voids and silver streaks (splay)
+ looks like: Small round or elongated bubbles inside the sheet, spread across the whole width; silvery streaks running along the sheet. Sheet may look slightly hazy.
+ zones: Z1 Resin drying and feeding, Z2 Main extruder
+ causes: Resin not dry enough: dryer temperature low, dew point too high, or drying time too short for the current output | Dryer fault: desiccant saturated, regeneration heater failed, air leak in dryer hoses | Wet or poorly stored regrind added to the feed | Vacuum vent not degassing: vent port blocked or vacuum pump off/weak
+ steps: (1) Check the dryer panel: actual temperature at setpoint (typical PC about 120 °C) and dew point at -40 °C or lower. Note any dryer alarm. (2) Check drying time: hopper level must give at least about 4 h residence at current output. If the hopper is low, material is going through undried. (3) Check the vacuum gauge on the extruder vent: vacuum present, vent port not blocked with material. (4) Check regrind: stop or reduce wet or open-stored regrind. (5) If available, measure resin moisture (target below 0.02 %). (6) While the dryer recovers, reduce line output to increase drying time. Do not try to fix bubbles by raising melt temperature: it makes PC degrade faster.
+ fixed when: Bubbles and streaks fade once properly dried material reaches the die. If the dryer was the cause this can take hours, because the hopper is full of wet material.
+ escalate: Dryer alarm, dew point does not recover, or vacuum pump fault: call maintenance.
+[yellowing_degradation] Yellowing / thermal degradation
+ looks like: Yellow to brown tint across the sheet or in streaks. Compare against a good sample on a white background. Often comes with black specks or bubbles.
+ zones: Z2 Main extruder, Z6 Flat sheet die, Z1 Resin drying and feeding
+ causes: Melt temperature too high | Material held too long in the extruder or die (output reduced a lot, long stop with heat on) | One heating zone overshooting: failed thermocouple or controller | Dryer running too hot or material dried far too long | Wrong or degraded regrind
+ steps: (1) Compare actual vs setpoint on every barrel, adapter and die zone. Look for one zone running hotter than set or a reading that does not change. (2) Lower melt temperature in steps of 5-10 °C and watch the color. (3) Check output: if it was reduced a lot, residence time went up. Restore output if possible. (4) Check the dryer temperature is not above setpoint. (5) Stop regrind if its color or source is doubtful.
+ fixed when: Color returns to normal after the degraded material is purged through.
+ escalate: A zone will not control, or a thermocouple reading is implausible: maintenance.
+[black_specks] Black or brown specks
+ looks like: Small dark particles in the sheet, randomly placed, sometimes in bursts. Often after a restart or a temperature change.
+ zones: Z2 Main extruder, Z3 Melt filtration, Z4 Gear pump (melt pump), Z6 Flat sheet die
+ causes: Burnt material breaking loose from dead spots in screw, adapter, gear pump or die | Screen pack torn or bypassed | Contaminated regrind or dirty material handling
+ steps: (1) Check pressure before and after the screen changer. Change the screen if the difference is high, or if it is suddenly low (possible torn screen). (2) Stop regrind and check the hopper and conveying lines for dirt. (3) If specks started after a restart or temperature change, purge: they often clear by themselves within a few minutes to an hour. (4) If specks persist, plan a die and adapter cleaning at the next stop.
+ fixed when: Speck count drops steadily after screen change or purge.
+ escalate: Specks continue after screen change and purge: die/adapter cleaning needed, involve the process engineer.
+[gels_unmelts_contamination] Gels, unmelted particles, foreign material
+ looks like: Clear or whitish specks or lumps ('fish eyes'), sometimes with a small tail; hazy spots from a foreign polymer.
+ zones: Z1 Resin drying and feeding, Z2 Main extruder, Z3 Melt filtration
+ causes: Unmelted pellets: feed and compression zone temperatures too low, or output too high for the screw | Foreign polymer in the feed (other plastics in regrind, wrong material in hopper) | Screen pack damaged
+ steps: (1) Check the screen changer pressure difference and change the screen if needed. (2) Check the feed and compression zone temperatures are at setpoint. (3) Check the hopper, dosing and regrind for foreign material or wrong grade. (4) As a test, reduce output slightly: if the particles drop, they are unmelts.
+ fixed when: Particles disappear after screen change or feed correction.
+ escalate: Wrong material in the feed system: stop feeding and inform the shift lead.
+[die_lines] Die lines
+ looks like: Thin straight lines running along the sheet (machine direction), at the same position across the width all the time. They do not move and are visible through the sheet, not only on one surface.
+ zones: Z6 Flat sheet die
+ causes: Degraded material building up on the die lips | Particle stuck in the die lip gap | Nick or scratch on the die lip
+ steps: (1) Measure the line's position from the sheet edge. That is where to look on the die lip. (2) Inspect the die lip at that position. (3) If plant procedure allows, clean the lip at that position with a brass tool, wearing full heat protection. Never use steel. (4) If lines keep coming back, a small increase in die lip temperature can slow build-up. (5) If the lip is damaged, it needs polishing at the next planned stop.
+ fixed when: Line disappears right after cleaning.
+ escalate: Lip damaged, or lines return within hours: process engineer / maintenance.
+[thickness_variation_cd] Thickness variation across the width
+ looks like: Bands of optical distortion along the sheet, wavy look when viewed at an angle; thickness gauge profile not flat; one side thicker than the other.
+ zones: Z6 Flat sheet die, Z7 Polishing roll stack (3-roll calender)
+ causes: Die lip gap uneven (lip bolts) | Die heating zones out of balance across width | Choker bar setting | Roll stack gap not parallel (one side tighter)
+ steps: (1) Read the thickness gauge profile, or measure at several points across the width. (2) Thick spot in one place: close the lip bolt(s) at that position by a small step; thin spot: open. Wait for the change to reach the gauge before the next step. (3) Check die zone temperatures across the width: actual vs set. (4) One whole side thick or thin: check roll stack gap on both sides (operator and drive side).
+ fixed when: Gauge profile flattens within tolerance.
+ escalate: Profile will not respond to bolt adjustments: process engineer.
+[thickness_surging_md] Thickness pulsing along the length (surging)
+ looks like: Thickness goes up and down along the sheet, giving bands across the full width that repeat every few seconds to minutes; may look like wide soft transverse waves.
+ zones: Z1 Resin drying and feeding, Z2 Main extruder, Z4 Gear pump (melt pump), Z11 Haul-off (pull rolls)
+ causes: Uneven feeding: hopper level low, material bridging | Melt pressure fluctuating before the gear pump | Gear pump inlet pressure control not stable | Roll stack or haul-off speed fluctuating
+ steps: (1) Check the hopper level and material flow at the feed throat. (2) Look at the melt pressure trend before the gear pump: is it cycling at the same rate as the bands? (3) Check the gear pump inlet pressure control loop is stable (not hunting). (4) Check roll stack and haul-off speed readings for fluctuation.
+ fixed when: Melt pressure trend flat; bands stop.
+ escalate: Control loop hunting or drive speed unstable: maintenance / controls.
+[chatter_marks] Chatter marks
+ looks like: Fine, evenly spaced lines across the width, repeating at a regular short interval (millimetres to a few centimetres).
+ zones: Z7 Polishing roll stack (3-roll calender), Z11 Haul-off (pull rolls), Z6 Flat sheet die
+ causes: Vibration in the roll stack: drive, gearbox, coupling or bearing | Haul-off speed not matched to roll stack | Die too hot, causing stick-slip at the lips
+ steps: (1) Measure the spacing between marks. Compare with roll circumference and drive parts: the matching spacing points to the component. (2) Listen and feel (from a safe position) for noise or vibration at roll drives and bearings. (3) Check die temperature is not above setpoint. (4) Check the speed ratio between roll stack and haul-off.
+ fixed when: Marks stop after the cause is corrected.
+ escalate: Bearing or gearbox noise: maintenance, before it fails.
+[dull_surface_orange_peel] Dull surface, haze, orange peel
+ looks like: Low gloss or matte patches, uneven reflection, fine bumpy 'orange peel' texture when a light is reflected in the surface.
+ zones: Z7 Polishing roll stack (3-roll calender)
+ causes: Polishing rolls too cold | Melt bank too small, sheet not fully pressed against the roll | Deposits (plate-out) or damage on the roll surface
+ steps: (1) Check each roll's temperature control unit: actual vs setpoint. (2) Raise polishing roll temperature in small steps. (3) Check the melt bank in the first nip: it should be small and even across the width. (4) Inspect the roll surface for deposits or damage; clean per procedure with approved materials only.
+ fixed when: Gloss returns within minutes of a roll temperature change.
+ escalate: Roll surface damaged: roll needs re-chroming/polishing, maintenance.
+[flow_lines_bank_marks] Flow lines, V-marks, bank marks
+ looks like: Wavy, V-shaped or irregular lines that move and change, often near the center or edges.
+ zones: Z7 Polishing roll stack (3-roll calender), Z6 Flat sheet die
+ causes: Melt bank in the first nip too big (excess melt rolls over itself) | Melt bank too small or uneven across width | Melt temperature too low
+ steps: (1) Look at the melt bank between roll 1 and roll 2 from the safe viewing position. (2) Bank too big: increase roll speed slightly or reduce output. Bank too small: the opposite. (3) Bank uneven across width: adjust die profile (see thickness_variation_cd). (4) Check melt temperature is at setpoint.
+ fixed when: Bank small and even, marks disappear.
+ escalate: Marks persist with a good bank: process engineer.
+[sticking_to_rolls] Sheet sticking to rolls
+ looks like: Sheet follows a roll past the normal release point; transverse release marks or tear marks on the surface; release line on the roll is uneven.
+ zones: Z7 Polishing roll stack (3-roll calender)
+ causes: Roll temperature too high | Melt temperature too high | Speed ratio between rolls wrong
+ steps: (1) Identify which roll the sheet sticks to. (2) Lower that roll's temperature in small steps. (3) Check melt temperature. (4) Check roll speed ratios.
+ fixed when: Sheet releases cleanly at a straight line.
+ escalate: Roll temperature will not control: maintenance (temperature control unit).
+[warp_bow_stress] Warp, bow, built-in stress
+ looks like: Sheet not flat on the conveyor or stack: edges curling up or down, bowing, waviness. Optical distortion under polarized light.
+ zones: Z7 Polishing roll stack (3-roll calender), Z8 Cooling conveyor (roller table), Z11 Haul-off (pull rolls)
+ causes: Top and bottom surfaces cooled unevenly (roll temperatures unbalanced) | Uneven cooling across the width (drafts, one side hotter) | Haul-off pulling too hard or too little | Sheets stacked while still too hot
+ steps: (1) Note which way the sheet curls (up or down) and whether it is edges or center. (2) The side that stays hotter longer shrinks more and ends up on the concave side. Adjust the roll temperatures to even out the two surfaces: make one small change and watch, because the right direction depends on your stack layout. (3) Check for drafts or fans hitting one side of the conveyor. (4) Check the haul-off speed ratio to the roll stack. (5) Check sheets are cool enough before stacking.
+ fixed when: Sheet lies flat after cooling.
+ escalate: Warp persists after balancing: process engineer.
+[edge_and_cut_cracks] Cracked edges, cracks at the cut
+ looks like: Cracks starting at the sheet edge or the cut line, chipped or whitened edges, rough cut faces.
+ zones: Z9 Edge trim, Z12 Cross-cut saw and stacker
+ causes: Edge trimming or cutting when the sheet is too cold (PC cracks easily from a notch) | Dull or damaged trim knives or saw blade | Wrong saw speed or feed rate
+ steps: (1) Check trim knives and saw blade condition (lockout first). Replace if dull or chipped. (2) Check the sheet temperature at trim and saw positions; trim warmer if possible. (3) Check saw speed and feed rate settings.
+ fixed when: Clean edges and cut faces.
+ escalate: Blade or knife damage repeating: maintenance.
+[protective_film_defects] Protective (masking) film defects
+ looks like: Wrinkles or trapped air bubbles under the masking film, film not covering the edge, film lifting or misaligned.
+ zones: Z10 Protective film laminator
+ causes: Film unwind tension too high or too low | Laminating nip pressure too low or uneven | Film roll misaligned | Sheet too hot or too cold at the laminator
+ steps: (1) Check film unwind tension; adjust in small steps. (2) Check laminating nip pressure on both sides. (3) Check film roll alignment to the sheet. (4) Check sheet temperature at the laminator.
+ fixed when: Film lies flat with no trapped air.
+ escalate: Tension control not working: maintenance.
+[roll_scratches_marks] Roll scratches and repeating roll marks
+ looks like: Sharp lines along the sheet on one surface only, or marks that repeat at a fixed distance along the sheet.
+ zones: Z7 Polishing roll stack (3-roll calender), Z8 Cooling conveyor (roller table), Z11 Haul-off (pull rolls)
+ causes: Damage or deposit on a polishing roll | Debris on a conveyor roller or haul-off roll | A roller not turning and the sheet sliding over it
+ steps: (1) Measure the distance between repeating marks and compare it with roll circumferences to find the roll. (2) Check which surface (top or bottom) has the mark to narrow down which rolls touch it. (3) Check conveyor rollers turn freely and are clean. (4) Inspect the identified roll surface.
+ fixed when: Marks stop after cleaning or fixing the roll.
+ escalate: Polishing roll damaged: maintenance.
+[uv_layer_defects] UV layer missing or uneven
+ looks like: Not visible in a normal photo. Under a UV lamp the protected surface looks different; gaps show as bright or dark areas.
+ zones: Z5 UV co-extruder and feedblock
+ causes: Co-extruder hopper empty or dosing stopped | Co-extruder stopped or running at wrong speed | Feedblock settings, or viscosity mismatch between layers
+ steps: (1) Check the co-extruder is running and its hopper has material. (2) Check the UV layer across the width with a UV lamp. (3) Check co-extruder speed and feedblock settings against the recipe.
+ fixed when: UV lamp check shows even coverage.
+ escalate: Coverage uneven with co-extruder running correctly: process engineer.
