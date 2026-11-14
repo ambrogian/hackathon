@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspection Console</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Inspection console</h1>
+  <nav id="nav" aria-label="Views">
+    <button data-go="arch">Architecture</button>
+    <button data-go="console">Scenarios</button>
+    <button data-go="log">Log</button>
+    <button data-go="incidents">Incidents</button>
+    <button data-go="ask">Ask the plant</button>
+    <button data-go="system">Edge stack</button>
+  </nav>
+  <span class="chip">IQ9 · offline · simulated sensors</span>
+  <span class="chip" id="decider"></span>
+  <span class="chip" id="tick"></span>
+</header>
+<button id="alertbar" class="alert" hidden></button>
+
+<!-- Architecture -->
+<main id="v-arch" class="vw">
+  <section class="plan">
+    <div class="layers"><label><input type="checkbox" id="ly-data" checked> Data paths</label><label><input type="checkbox" id="ly-sens" checked> Sensors</label><label><input type="checkbox" id="ly-fault" checked> Fault markers</label></div>
+    <svg id="plansvg" viewBox="0 0 900 470" role="img" aria-label="Plant floor plan with sensors and live fault markers">
+      <defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#1b1916" stroke-width="1"/></pattern></defs>
+      <rect width="900" height="470" fill="url(#grid)"/>
+      <rect x="40" y="36" width="820" height="410" fill="none" stroke="#7F909C" stroke-width="2.5"/>
+      <text class="lbl" x="48" y="28">Plant 1 · ground floor · simulated</text>
+
+      <g class="room"><rect x="60" y="56" width="370" height="180" class="rm"/><text class="lbl t" x="70" y="74">Switchgear room 2 · 11 kV</text></g>
+      <g class="go cab" data-go="asset/sg1" tabindex="0" role="button" aria-label="SG-1"><rect id="eq-sg1" x="82" y="96" width="62" height="100" class="eq"/><text class="lbl" x="90" y="112">SG-1</text><text class="lbl st" id="st-sg1" x="90" y="190"></text></g>
+      <g class="go cab" data-go="asset/sg2" tabindex="0" role="button" aria-label="SG-2"><rect id="eq-sg2" x="164" y="96" width="62" height="100" class="eq"/><text class="lbl" x="172" y="112">SG-2</text><text class="lbl st" id="st-sg2" x="172" y="190"></text></g>
+      <g class="go cab" data-go="asset/sg3" tabindex="0" role="button" aria-label="SG-3"><rect id="eq-sg3" x="246" y="96" width="62" height="100" class="eq"/><text class="lbl" x="254" y="112">SG-3</text><text class="lbl st" id="st-sg3" x="254" y="190"></text></g>
+      <g class="go cab" data-go="asset/sg4" tabindex="0" role="button" aria-label="SG-4"><rect id="eq-sg4" x="328" y="96" width="62" height="100" class="eq"/><text class="lbl" x="336" y="112">SG-4</text><text class="lbl st" id="st-sg4" x="336" y="190"></text></g>
+
+      <g class="room"><rect x="450" y="56" width="180" height="180" class="rm"/><text class="lbl t" x="460" y="74">Transformer bay</text><rect x="490" y="110" width="100" height="90" class="eq"/><text class="lbl" x="506" y="160">T1 · not simulated</text></g>
+
+      <g class="room"><rect x="650" y="56" width="200" height="180" class="rm"/><text class="lbl t" x="660" y="74">Compressor room</text><path d="M778 150H830" stroke="#7F909C"/><text class="lbl" x="784" y="140">air line</text></g>
+      <g class="go cab" data-go="asset/c1" tabindex="0" role="button" aria-label="C1"><circle id="eq-c1" cx="740" cy="150" r="38" class="eq"/><text class="lbl" x="730" y="154">C1</text></g>
+
+      <g class="room"><rect x="60" y="256" width="270" height="180" class="rm"/><text class="lbl t" x="70" y="274">Extrusion line · PC sheet</text><path d="M126 348H136M192 348H202M258 348H268" stroke="#7F909C"/><g class="go cab" data-go="asset/z1" tabindex="0" role="button" aria-label="Z1 dryer"><rect id="eq-z1" x="70" y="304" width="56" height="88" class="eq"/><text class="lbl" x="76" y="324">Z1</text><text class="lbl" x="76" y="338">dryer</text><text class="lbl st" id="st-z1" x="76" y="384"></text></g><g class="go cab" data-go="asset/z3" tabindex="0" role="button" aria-label="Z3 screen pack"><rect id="eq-z3" x="136" y="304" width="56" height="88" class="eq"/><text class="lbl" x="142" y="324">Z3</text><text class="lbl" x="142" y="338">screen</text><text class="lbl st" id="st-z3" x="142" y="384"></text></g><g class="go cab" data-go="asset/z6" tabindex="0" role="button" aria-label="Z6 die"><rect id="eq-z6" x="202" y="304" width="56" height="88" class="eq"/><text class="lbl" x="208" y="324">Z6</text><text class="lbl" x="208" y="338">die</text><text class="lbl st" id="st-z6" x="208" y="384"></text></g><g class="go cab" data-go="asset/z7" tabindex="0" role="button" aria-label="Z7 roll stack"><rect id="eq-z7" x="268" y="304" width="56" height="88" class="eq"/><text class="lbl" x="274" y="324">Z7</text><text class="lbl" x="274" y="338">rolls</text><text class="lbl st" id="st-z7" x="274" y="384"></text></g></g>
+
+      <g class="go room edge" data-go="system" tabindex="0" role="button" aria-label="Edge closet, open edge stack"><rect x="350" y="256" width="150" height="180" class="rm blue"/><text class="lbl t" x="360" y="274" style="fill:#6DB3DB">Edge closet</text>
+        <g class="go cab" data-go="asset/edge" tabindex="0" role="button" aria-label="IQ-9075 board telemetry"><rect id="eq-edge" x="372" y="296" width="106" height="64" class="eq" style="fill:#162027"/><text class="lbl" x="382" y="320" style="fill:#6DB3DB">IQ-9075 EVK</text><text class="lbl" x="382" y="336">Ubuntu 24.04</text><text class="lbl" x="382" y="350">aarch64 · NPU</text><text class="lbl st" id="st-edge" x="382" y="309"></text></g>
+        <rect x="372" y="374" width="106" height="30" class="eq"/><text class="lbl" x="382" y="393">UPS</text></g>
+
+      <g class="go room" data-go="log" tabindex="0" role="button" aria-label="Control office, open log"><rect x="520" y="256" width="330" height="180" class="rm"/><text class="lbl t" x="530" y="274">Control office</text>
+        <rect x="560" y="320" width="90" height="54" class="eq"/><text class="lbl" x="574" y="351">Live log</text><rect x="680" y="320" width="90" height="54" class="eq"/><text class="lbl" x="686" y="351">Work orders</text></g>
+
+      <g id="g-data" class="datapaths" fill="none" stroke="#6DB3DB" stroke-width="1.4" stroke-dasharray="5 4" opacity=".7">
+        <path d="M200 218V242H425V296"/><path d="M740 218V246H500"/><path d="M500 246H425"/><path d="M478 328H510V347H560" stroke="#3DBE84"/></g>
+      <g id="g-sens">
+        <rect x="228" y="208" width="14" height="10" fill="#6DB3DB"/><path d="M235 208L120 130M235 208L330 130" stroke="#6DB3DB" opacity=".45"/><path d="M235 208L120 130L330 130Z" fill="#6DB3DB" opacity=".07"/><text class="lbl" x="246" y="222" style="fill:#6DB3DB">Cam A thermal+RGB</text>
+        <g fill="#6DB3DB"><rect x="120" y="206" width="4" height="4"/><rect x="128" y="206" width="4" height="4"/><rect x="136" y="206" width="4" height="4"/><rect x="120" y="214" width="4" height="4"/><rect x="128" y="214" width="4" height="4"/><rect x="136" y="214" width="4" height="4"/></g><text class="lbl" x="120" y="232" style="fill:#6DB3DB">Mic array 4×4</text>
+        <rect x="733" y="208" width="14" height="10" fill="#6DB3DB"/><path d="M740 208L690 150M740 208L790 150" stroke="#6DB3DB" opacity=".45"/><text class="lbl" x="752" y="222" style="fill:#6DB3DB">Cam B + mics</text>
+      </g>
+      <g id="g-fault">
+        <g id="pu-sg2" class="pulse crit" hidden><circle cx="195" cy="150" r="7" fill="#F06A5E"/><circle cx="195" cy="150" r="18" fill="none" stroke="#F06A5E"/><circle cx="195" cy="150" r="30" fill="none" stroke="#F06A5E" opacity=".5"/></g>
+        <g id="cl-sg2" hidden><rect x="236" y="120" width="170" height="40" class="callout crit"/><text class="lbl" id="cl-sg2-a" x="244" y="136" style="fill:#F06A5E"></text><text class="lbl" id="cl-sg2-b" x="244" y="150"></text></g>
+        <g id="pu-c1" class="pulse warn" hidden><circle cx="740" cy="150" r="50" fill="none" stroke="#F2B33D" opacity=".7"/></g>
+        <g id="cl-c1" hidden><rect x="662" y="80" width="170" height="28" class="callout warn"/><text class="lbl" id="cl-c1-a" x="670" y="97" style="fill:#F2B33D"></text></g>
+        <g id="pu-sg1" class="pulse warn" hidden><circle cx="113" cy="146" r="40" fill="none" stroke="#F2B33D" opacity=".7"/></g>
+        <g id="pu-sg3" class="pulse warn" hidden><circle cx="277" cy="146" r="40" fill="none" stroke="#F2B33D" opacity=".7"/></g>
+        <g id="pu-sg4" class="pulse warn" hidden><circle cx="359" cy="146" r="40" fill="none" stroke="#F2B33D" opacity=".7"/></g>
+      </g>
+    </svg>
+  </section>
+  <aside class="side">
+    <h2>Assets · live</h2>
+    <div id="faults" class="faults"></div>
+    <div class="note">Click a cabinet or the compressor for its live thermal and acoustic view, the edge closet for the board, the control office for the log. Use Scenarios or an asset's buttons to inject a fault.</div>
+  </aside>
+  <section class="flow" aria-label="Signal flow">
+    <button class="fnode" data-go="system"><i>1</i><b>Sense</b><span>thermal 32×24 · RGB · 16-ch mics · load</span></button><em>→</em>
+    <button class="fnode" data-go="asset/sg2"><i>2</i><b>Analyse</b><span>ΔT · beamforming · coherence · kurtosis</span></button><em>→</em>
+    <button class="fnode" data-go="asset/sg2"><i>3</i><b>Decide</b><span>rule → d1-2B → action allowlist</span></button><em>→</em>
+    <button class="fnode" data-go="asset/c1"><i>4</i><b>Explain</b><span>local LFM, numbers checked in code</span></button><em>→</em>
+    <button class="fnode" data-go="incidents"><i>5</i><b>Log + replay</b><span>flushed JSONL, scrub an incident</span></button>
+  </section>
+</main>
+
+<!-- Asset / scenarios console -->
+<main id="v-asset" class="vw" hidden>
+  <section class="view">
+    <div class="row" id="assethead">
+      <button data-go="arch">← Architecture</button><strong id="assettitle" class="atitle"></strong>
+      <span class="spacer"></span>
+      <span id="inject" class="row"></span>
+    </div>
+    <canvas id="view" width="640" height="480" aria-label="Thermal image with sound source overlay"></canvas>
+    <p class="legend" id="legend"></p>
+    <div class="row" id="scenes"></div>
+  </section>
+  <section class="side">
+    <div class="card" id="decision"></div>
+    <div class="card" id="d1card" hidden></div>
+    <div class="card"><h2>Work order</h2><p id="report"></p><small id="rsrc"></small></div>
+    <div class="card"><h2>Measured</h2><dl id="meas"></dl></div>
+    <div class="card" id="assetlog"><h2>Recent log</h2><pre id="assetlogpre" class="logpre"></pre></div>
+    <div class="card" id="valcard">
+      <h2>Validation on random scenes</h2>
+      <div class="row">
+        <label>Scenes <input id="vn" type="number" min="10" max="1000" value="100"></label>
+        <button id="vrun">Run</button>
+        <span id="vprog"></span>
+      </div>
+      <div id="vout"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Log -->
+<main id="v-log" class="vw one" hidden>
+  <section class="card wide">
+    <h2>Live decision log <span id="logfile" class="m"></span></h2>
+    <div class="row" id="logbar"></div>
+    <div class="logwrap"><table id="logtable"><thead><tr><th>Time</th><th>Asset</th><th>Decision</th><th>Action</th><th>ΔT °C</th><th>Coh.</th><th>ms</th><th>Text</th></tr></thead><tbody></tbody></table>
+    <pre id="lograw" class="logpre" hidden></pre></div>
+  </section>
+</main>
+
+<!-- Incidents -->
+<main id="v-incidents" class="vw" hidden>
+  <section class="side">
+    <h2>Incidents</h2>
+    <div id="inclist" class="faults"></div>
+    <div class="note">An incident starts at the first FAULT decision and ends when the asset returns to OK. The replay includes the 25 loops before it.</div>
+  </section>
+  <section class="view">
+    <div id="incempty" class="card">Pick an incident on the left. Inject a fault on SG-1 to create one within about 30 seconds.</div>
+    <div id="incbody" hidden>
+      <div class="alert static" id="incnotice"></div>
+      <div class="card"><h2>Traces <span class="m" id="inclabel"></span></h2>
+        <canvas id="inccanvas" width="900" height="320" aria-label="Incident traces"></canvas>
+        <div class="row"><button id="incplay">Play</button><input id="incscrub" type="range" min="0" max="0" value="0" aria-label="Scrub"><span class="m" id="incpos"></span></div></div>
+      <div class="card" id="incdetail"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Ask the plant -->
+<main id="v-ask" class="vw one" hidden>
+  <section class="card wide">
+    <h2>Ask the plant <span class="m" id="askmode"></span></h2>
+    <p class="note" style="margin-top:0">The model picks tools, code checks every call, and refuses actions the rules do not allow. Tools: list_assets, read_asset, open_work_order (only for an asset in FAULT).</p>
+    <div class="row" id="askchips"></div>
+    <form class="row" id="askform"><input id="askq" type="text" maxlength="300" placeholder="Which assets need attention?" aria-label="Question" autocomplete="off"><button id="askgo" type="submit">Ask</button></form>
+    <div id="askout"></div>
+  </section>
+</main>
+
+<!-- Edge stack -->
+<main id="v-system" class="vw one" hidden>
+  <div class="cols" id="sysgrid"></div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
